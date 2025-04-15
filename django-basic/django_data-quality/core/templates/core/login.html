@@ -1,0 +1,128 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Login - Data Quality Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-container {
+        max-width: 400px;
+        margin: 40px auto;
+    }
+    
+    .login-card {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .login-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .login-header img {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 20px;
+    }
+    
+    .login-header h1 {
+        font-size: 24px;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .login-header p {
+        color: #666;
+        font-size: 14px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-control {
+        height: 45px;
+        font-size: 14px;
+    }
+    
+    .btn-login {
+        width: 100%;
+        height: 45px;
+        font-size: 16px;
+        font-weight: 500;
+    }
+    
+    .login-footer {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+        color: #666;
+    }
+    
+    .login-footer a {
+        color: #007bff;
+        text-decoration: none;
+    }
+    
+    .login-footer a:hover {
+        text-decoration: underline;
+    }
+    
+    .alert {
+        border-radius: 8px;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="{% static 'core/img/logo.png' %}" alt="Logo" onerror="this.style.display='none'">
+                <h1>Welcome Back</h1>
+                <p>Please login to continue to the Data Quality Management System</p>
+            </div>
+            
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {{ form|crispy }}
+                
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>Error:</strong> Please check your username and password.
+                </div>
+                {% endif %}
+                
+                <button type="submit" class="btn btn-primary btn-login">
+                    Sign In
+                </button>
+                
+                {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+            </form>
+            
+            <div class="login-footer">
+                <p>Don't have an account? Please contact your administrator.</p>
+                <a href="{% url 'core:password_reset' %}">Forgot your password?</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

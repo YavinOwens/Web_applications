@@ -1,0 +1,201 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>{{ title|default:"Datasets" }}</h1>
+        </div>
+    </div>
+
+    <!-- Search and View Controls -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search datasets..." 
+                       value="{{ search_query }}" id="searchInput">
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="button" id="searchButton">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select class="form-control" id="sortSelect">
+                {% for option in sort_options %}
+                <option value="{{ option.value }}" {% if sort_by == option.value %}selected{% endif %}>
+                    {{ option.label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 text-right">
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-secondary {% if view_mode == 'table' %}active{% endif %}"
+                        onclick="setViewMode('table')">
+                    <i class="fas fa-table"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary {% if view_mode == 'card' %}active{% endif %}"
+                        onclick="setViewMode('card')">
+                    <i class="fas fa-th-large"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dataset Count -->
+    <div class="row mb-3">
+        <div class="col">
+            <p class="text-muted">
+                <i class="fas fa-database"></i> Total Datasets: {{ total_datasets }}
+                {% if search_query %}
+                (filtered from search: "{{ search_query }}")
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Datasets Grid -->
+    {% if view_mode == 'card' %}
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+        {% for dataset in datasets %}
+        <div class="col mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-truncate" title="{{ dataset.name }}">
+                        {{ dataset.name }}
+                    </h5>
+                    <p class="card-text small text-muted mb-2">
+                        <span title="Rows"><i class="fas fa-list"></i> {{ dataset.total_rows }}</span>
+                        <span class="mx-2">|</span>
+                        <span title="Columns"><i class="fas fa-columns"></i> {{ dataset.total_columns }}</span>
+                    </p>
+                    <p class="card-text small text-muted">
+                        <i class="fas fa-clock"></i> {{ dataset.created_at|date:"M d, Y" }}
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <div class="btn-group btn-group-sm w-100">
+                        <a href="{% url 'core:analyze_with_grid' dataset.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-table"></i> View
+                        </a>
+                        <a href="{% url 'core:dataset_detail' dataset.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-info-circle"></i> Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No datasets found. <a href="{% url 'core:dataset_upload' %}">Upload a dataset</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Rows</th>
+                    <th>Columns</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dataset in datasets %}
+                <tr>
+                    <td>{{ dataset.name }}</td>
+                    <td>{{ dataset.total_rows }}</td>
+                    <td>{{ dataset.total_columns }}</td>
+                    <td>{{ dataset.created_at|date:"M d, Y" }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'core:analyze_with_grid' dataset.id %}" class="btn btn-outline-primary">
+                                <i class="fas fa-table"></i> View
+                            </a>
+                            <a href="{% url 'core:dataset_detail' dataset.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-info-circle"></i> Profile
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Pagination -->
+    {% if datasets.has_other_pages %}
+    <nav aria-label="Dataset pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if datasets.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ datasets.previous_page_number }}&view={{ view_mode }}&sort={{ sort_by }}&search={{ search_query }}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in datasets.paginator.page_range %}
+            <li class="page-item {% if datasets.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}&view={{ view_mode }}&sort={{ sort_by }}&search={{ search_query }}">
+                    {{ num }}
+                </a>
+            </li>
+            {% endfor %}
+
+            {% if datasets.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ datasets.next_page_number }}&view={{ view_mode }}&sort={{ sort_by }}&search={{ search_query }}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('searchInput').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') {
+        updateSearch();
+    }
+});
+
+document.getElementById('searchButton').addEventListener('click', updateSearch);
+document.getElementById('sortSelect').addEventListener('change', updateSort);
+
+function updateSearch() {
+    const searchQuery = document.getElementById('searchInput').value;
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('search', searchQuery);
+    currentUrl.searchParams.set('page', '1');
+    window.location.href = currentUrl.toString();
+}
+
+function updateSort() {
+    const sortValue = document.getElementById('sortSelect').value;
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('sort', sortValue);
+    currentUrl.searchParams.set('page', '1');
+    window.location.href = currentUrl.toString();
+}
+
+function setViewMode(mode) {
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('view', mode);
+    window.location.href = currentUrl.toString();
+}
+</script>
+{% endblock %} 

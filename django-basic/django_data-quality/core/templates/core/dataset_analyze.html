@@ -1,0 +1,227 @@
+{% extends "core/base.html" %}
+{% load static custom_filters %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>Dataset Analysis: {{ dataset.name }}</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">Dataset Overview</div>
+                <div class="card-body">
+                    <p><strong>Total Rows:</strong> {{ dataset.total_rows }}</p>
+                    <p><strong>Total Columns:</strong> {{ dataset.total_columns }}</p>
+                    <p><strong>File Type:</strong> {{ dataset.get_file_type_display }}</p>
+                    <div class="mt-3">
+                        <button onclick="generateProfile()" class="btn btn-primary">Generate Detailed Profile</button>
+                        <button onclick="generateYDataProfile()" class="btn btn-success">YMO-Profile</button>
+                        <a href="{% url 'core:dataset_detail' dataset.id %}" class="btn btn-secondary ml-2">Back to Dataset</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">Analysis Details</div>
+                <div class="card-body">
+                    <p><strong>Analysis Date:</strong> {{ analysis.created_at }}</p>
+                    <p><strong>Numeric Columns Analyzed:</strong> {{ numeric_stats|length }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">Numeric Statistics</div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Mean</th>
+                                <th>Median</th>
+                                <th>Min</th>
+                                <th>Max</th>
+                                <th>Standard Deviation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for column, stats in numeric_stats.items %}
+                                <tr>
+                                    <td>{{ column }}</td>
+                                    <td>{{ stats.mean|floatformat:2 }}</td>
+                                    <td>{{ stats.median|floatformat:2 }}</td>
+                                    <td>{{ stats.min|floatformat:2 }}</td>
+                                    <td>{{ stats.max|floatformat:2 }}</td>
+                                    <td>{{ stats.std|floatformat:2 }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No numeric columns found</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Data Section -->
+    <div id="profile-section" class="row mt-4" style="display: none;">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Detailed Profile</h4>
+                    <button class="btn btn-primary" onclick="downloadProfile()">
+                        <i class="bi bi-download"></i> Download Profile
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">Column Analysis</div>
+                                <div class="card-body">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Column</th>
+                                                <th>Type</th>
+                                                <th>Missing Values</th>
+                                                <th>Details</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="profile-table-body">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let profileData = null;
+
+function generateProfile() {
+    // Show loading state
+    const button = document.querySelector('button[onclick="generateProfile()"]');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+    button.disabled = true;
+
+    fetch(`/api/datasets/{{ dataset.id }}/generate-profile/`)
+        .then(response => response.json())
+        .then(data => {
+            profileData = data;
+            displayProfile(data);
+            button.innerHTML = originalText;
+            button.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            button.innerHTML = originalText;
+            button.disabled = false;
+            alert('Error generating profile. Please try again.');
+        });
+}
+
+function displayProfile(data) {
+    const profileSection = document.getElementById('profile-section');
+    const tableBody = document.getElementById('profile-table-body');
+    
+    // Clear existing content
+    tableBody.innerHTML = '';
+    
+    // Add rows for each column
+    Object.entries(data.columns).forEach(([column, details]) => {
+        const missingData = data.missing_values[column] || { count: 0, percentage: 0 };
+        
+        let detailsText = '';
+        if (details.type === 'numeric') {
+            detailsText = `Min: ${details.min || 'N/A'}, Max: ${details.max || 'N/A'}, Mean: ${(details.mean || 0).toFixed(2)}`;
+        } else if (details.type === 'datetime') {
+            detailsText = `Min Date: ${details.min_date || 'N/A'}, Max Date: ${details.max_date || 'N/A'}`;
+        } else if (details.type === 'categorical' || details.type === 'string') {
+            detailsText = `Unique Values: ${details.unique_values}`;
+        }
+        
+        const row = `
+            <tr>
+                <td>${column}</td>
+                <td>${details.type}</td>
+                <td>${missingData.count} (${missingData.percentage.toFixed(2)}%)</td>
+                <td>${detailsText}</td>
+            </tr>
+        `;
+        tableBody.innerHTML += row;
+    });
+    
+    // Show the profile section
+    profileSection.style.display = 'block';
+}
+
+function downloadProfile() {
+    if (!profileData) return;
+    
+    const blob = new Blob([JSON.stringify(profileData, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '{{ dataset.name }}_profile.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function generateYDataProfile() {
+    // Show loading state
+    const button = document.querySelector('button[onclick="generateYDataProfile()"]');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+    button.disabled = true;
+
+    fetch(`/api/datasets/{{ dataset.id }}/generate-ydata-profile/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Open the report in a new tab
+                window.open(data.report_url, '_blank');
+            } else {
+                throw new Error(data.error || 'Failed to generate YData profile');
+            }
+            button.innerHTML = originalText;
+            button.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            button.innerHTML = originalText;
+            button.disabled = false;
+            alert('Error generating YData profile. Please try again.');
+        });
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0,0,0,.05);
+}
+.spinner-border {
+    margin-right: 5px;
+}
+</style>
+{% endblock %} 

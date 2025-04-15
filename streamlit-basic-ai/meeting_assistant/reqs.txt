@@ -1,0 +1,6 @@
+streamlit
+SpeechRecognition
+transformers
+sounddevice
+pipwin
+assemblyai

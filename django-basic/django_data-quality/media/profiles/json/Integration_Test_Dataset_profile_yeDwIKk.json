@@ -1,0 +1,1 @@
+{"numeric_stats": {"age": {"mean": 30}, "salary": {"mean": 61666}}, "correlation_matrix": {"age_salary_correlation": 0.7}, "missing_value_stats": {"total_missing": 0}}

@@ -1,0 +1,446 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="app-container">
+    <!-- Header -->
+    <header class="header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="h4 mb-0">AI Chatbot</h1>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container-fluid h-100">
+            <div class="row h-100">
+                <!-- Left Panel (File Upload & Data Sources) -->
+                <div class="col-md-3 border-end p-3">
+                    <div class="mb-4">
+                        <h5>Upload Data</h5>
+                        <form method="post" enctype="multipart/form-data" class="mb-3">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label">File Upload</label>
+                                <input type="file" name="file_upload" class="form-control" accept=".csv,.xlsx,.xls,.pdf">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Upload</button>
+                        </form>
+                    </div>
+
+                    <!-- File Summary and Analysis Section -->
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <i class="fas fa-file-alt me-2"></i>Data Analysis Dashboard
+                            </h5>
+                        </div>
+                        <div class="card-body data-analysis-dashboard">
+                            {% if file_content %}
+                                <!-- Data Overview -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <div class="card border-0 bg-light">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-primary">
+                                                    <i class="fas fa-info-circle me-2"></i>Dataset Overview
+                                                </h6>
+                                                {% if file_metadata %}
+                                                    <div class="row g-3">
+                                                        <div class="col-md-3">
+                                                            <div class="stat-card p-3 bg-white rounded shadow-sm">
+                                                                <div class="small text-muted">Total Rows</div>
+                                                                <div class="h4 mb-0">{{ file_metadata.total_rows|default:"N/A" }}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="stat-card p-3 bg-white rounded shadow-sm">
+                                                                <div class="small text-muted">Total Columns</div>
+                                                                <div class="h4 mb-0">{{ file_metadata.total_columns|default:"N/A" }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Column Information -->
+                                {% if file_metadata.column_types %}
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <div class="card border-0">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-primary mb-3">
+                                                    <i class="fas fa-table me-2"></i>Column Information
+                                                </h6>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-hover">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th>Column Name</th>
+                                                                <th>Data Type</th>
+                                                                <th>Contains Nulls</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for column, type in file_metadata.column_types.items %}
+                                                            <tr>
+                                                                <td>{{ column }}</td>
+                                                                <td><span class="badge bg-secondary">{{ type }}</span></td>
+                                                                <td>
+                                                                    {% if file_metadata.has_nulls|get_item:column %}
+                                                                        <span class="badge bg-warning">Yes</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-success">No</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Insights -->
+                                {% if insights %}
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <div class="card border-0">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-primary mb-3">
+                                                    <i class="fas fa-chart-line me-2"></i>Data Insights
+                                                </h6>
+                                                <div class="accordion" id="insightsAccordion">
+                                                    {% for insight in insights %}
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                                                            <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" 
+                                                                    data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}">
+                                                                {{ insight.title }}
+                                                            </button>
+                                                        </h2>
+                                                        <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                                                             data-bs-parent="#insightsAccordion">
+                                                            <div class="accordion-body">
+                                                                <pre class="insight-content">{{ insight.content }}</pre>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Visualizations -->
+                                {% if figures %}
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="card border-0">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-primary mb-3">
+                                                    <i class="fas fa-chart-bar me-2"></i>Data Visualizations
+                                                </h6>
+                                                <div class="row g-4">
+                                                    {% for figure in figures %}
+                                                    <div class="col-md-6">
+                                                        <div class="card h-100">
+                                                            <div class="card-header bg-light py-2">
+                                                                <h6 class="mb-0">{{ figure.title }}</h6>
+                                                            </div>
+                                                            <div class="card-body text-center">
+                                                                <img src="data:image/png;base64,{{ figure.image }}" 
+                                                                     class="img-fluid rounded" 
+                                                                     alt="{{ figure.title }}">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="text-center text-muted py-5">
+                                    <i class="fas fa-upload fa-3x mb-3"></i>
+                                    <p>Upload a file to see data analysis and insights</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Panel (Chat Interface) -->
+                <div class="col-md-6 d-flex flex-column h-100">
+                    <!-- Chat Messages -->
+                    <div class="flex-grow-1 p-3 overflow-auto" id="chat-messages">
+                        {% if error %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                        {% endif %}
+
+                        {% for message in chat_history %}
+                        <div class="message mb-3 {% if message.role == 'assistant' %}assistant-message{% else %}user-message{% endif %}">
+                            <div class="message-content p-3 rounded {% if message.role == 'assistant' %}bg-light{% else %}bg-primary text-white{% endif %}">
+                                {{ message.content|linebreaks }}
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        {% if code_results %}
+                        {% for result in code_results %}
+                        <div class="code-result mb-3">
+                            <pre class="bg-dark text-light p-3 rounded"><code>{{ result.code }}</code></pre>
+                            {% if result.output %}
+                            <div class="output mt-2 p-3 bg-light rounded">
+                                <pre>{{ result.output }}</pre>
+                            </div>
+                            {% endif %}
+                            {% for figure in result.figures %}
+                            <img src="data:image/png;base64,{{ figure }}" class="img-fluid mt-2" alt="Visualization">
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Chat Input -->
+                    <div class="p-3 border-top">
+                        <form method="post" id="chat-form">
+                            {% csrf_token %}
+                            <div class="input-group">
+                                <textarea name="user_input" class="form-control" rows="1" placeholder="Type your message..." required></textarea>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right Panel (Visualizations) -->
+                <div class="col-md-3 border-start p-3">
+                    {% if figures %}
+                    <h5>Data Visualizations</h5>
+                    <div class="visualizations">
+                        {% for figure in figures %}
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">{{ figure.title }}</h6>
+                            </div>
+                            <div class="card-body p-2">
+                                <img src="data:image/png;base64,{{ figure.image }}" class="img-fluid" alt="{{ figure.title }}">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .app-container {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .header {
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .main-content {
+        flex: 1;
+        overflow: hidden;
+    }
+
+    /* Data Analysis Dashboard scrolling */
+    .data-analysis-dashboard {
+        height: calc(100vh - 200px);
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+
+    .data-analysis-dashboard::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .data-analysis-dashboard::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .data-analysis-dashboard::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+
+    .data-analysis-dashboard::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* Data Visualizations scrolling */
+    .visualizations {
+        height: calc(100vh - 150px);
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+
+    .visualizations::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .visualizations::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .visualizations::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+
+    .visualizations::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    .message {
+        max-width: 80%;
+    }
+
+    .user-message {
+        margin-left: auto;
+    }
+
+    .assistant-message {
+        margin-right: auto;
+    }
+
+    #chat-messages {
+        scroll-behavior: smooth;
+    }
+
+    textarea {
+        resize: none;
+    }
+
+    /* Ensure proper spacing for code blocks */
+    pre {
+        margin-bottom: 0;
+        white-space: pre-wrap;
+    }
+
+    /* Visualization styling */
+    .visualizations .card {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .visualizations .card-header {
+        background-color: #f8f9fa;
+        padding: 0.5rem 1rem;
+    }
+
+    .visualizations img {
+        width: 100%;
+        height: auto;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .message {
+            max-width: 90%;
+        }
+    }
+
+    /* Custom styles for data analysis dashboard */
+    .stat-card {
+        transition: transform 0.2s;
+        border-left: 4px solid #0d6efd;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    .insight-content {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        font-size: 0.9rem;
+        white-space: pre-wrap;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .table {
+        font-size: 0.9rem;
+    }
+    .badge {
+        font-weight: 500;
+    }
+    .accordion-button:not(.collapsed) {
+        background-color: #e7f1ff;
+        color: #0d6efd;
+    }
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: rgba(13, 110, 253, 0.25);
+    }
+    .card-header {
+        border-bottom: 2px solid #e9ecef;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-scroll to bottom of chat
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        // Auto-resize textarea
+        const textarea = document.querySelector('textarea');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Form submission
+        const form = document.getElementById('chat-form');
+        form.addEventListener('submit', function() {
+            const button = this.querySelector('button');
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+        });
+    });
+</script>
+
+<!-- Add custom template filter for dictionary access -->
+{% load static %}
+{% block extra_js %}
+<script>
+// Add template filter for dictionary access
+django.jQuery.extend(django.jQuery.expr[':'], {
+    'containsi': function(elem, i, match, array) {
+        return (elem.textContent || elem.innerText || '').toLowerCase()
+            .indexOf((match[3] || "").toLowerCase()) >= 0;
+    }
+});
+</script>
+{% endblock %}
+{% endblock %} 

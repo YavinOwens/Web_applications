@@ -1,0 +1,197 @@
+{% extends "core/base.html" %}
+{% load static custom_filters %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'core:rule_list' %}">Rules</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ rule.name }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2>{{ rule.name }}</h2>
+                    <div class="btn-group">
+                        {% if can_validate and rule.dataset %}
+                            <a href="{% url 'core:rule_validate' rule.id %}" class="btn btn-primary">
+                                <i class="bi bi-play-fill"></i> Validate Rule
+                            </a>
+                        {% endif %}
+                        {% if can_delete %}
+                            <form method="post" action="{% url 'core:rule_delete' rule.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this rule?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-trash"></i> Delete Rule
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>Rule Details</h4>
+                            <table class="table">
+                                <tr>
+                                    <th>Type</th>
+                                    <td>{{ rule.get_rule_type_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Column</th>
+                                    <td>{{ rule.column_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Dataset</th>
+                                    <td>
+                                        {% if rule.dataset %}
+                                            <a href="{% url 'core:dataset_detail' rule.dataset.id %}">
+                                                {{ rule.dataset.name }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">No dataset associated</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Created At</th>
+                                    <td>{{ rule.created_at }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>Rule Parameters</h4>
+                            {% if rule.parameters %}
+                                <table class="table">
+                                    {% for key, value in rule.parameters.items %}
+                                        <tr>
+                                            <th>{{ key }}</th>
+                                            <td>{{ value }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </table>
+                            {% else %}
+                                <div class="alert alert-info">No additional parameters defined.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>Validation Results</h4>
+                    <div class="btn-group">
+                        {% if can_validate and rule.dataset %}
+                            <a href="{% url 'core:rule_validate' rule.id %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-play-fill"></i> Run Validation
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if has_validation_results %}
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Total Validations</h5>
+                                        <p class="display-4">{{ total_validations }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Passed Validations</h5>
+                                        <p class="display-4 text-success">{{ passed_validations }}</p>
+                                        <small class="text-muted">{{ validation_success_rate|floatformat:2 }}%</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Failed Validations</h5>
+                                        <p class="display-4 text-danger">{{ failed_validations }}</p>
+                                        <small class="text-muted">
+                                            {% if total_validations > 0 %}
+                                                {{ failed_validations|multiply:100.0|divide:total_validations|floatformat:2 }}%
+                                            {% else %}
+                                                0%
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Validation Date</th>
+                                    <th>Status</th>
+                                    <th>Failed Rows</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in validation_results %}
+                                    <tr class="{% if result.passed %}table-success{% else %}table-danger{% endif %}">
+                                        <td>{{ result.validation_date|date:"Y-m-d H:i" }}</td>
+                                        <td>
+                                            {% if result.passed %}
+                                                <span class="badge bg-success">Passed</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Failed</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if not result.passed %}
+                                                {{ result.get_failed_rows_count }}
+                                                <small class="text-muted">({{ result.get_failure_rate|floatformat:2 }}%)</small>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'core:dataset_detail' result.dataset.id %}" class="btn btn-sm btn-info">
+                                                <i class="bi bi-eye"></i> View Dataset
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <p>No validation results available for this rule.</p>
+                            {% if rule.dataset %}
+                                <a href="{% url 'core:rule_validate' rule.id %}" class="btn btn-primary">
+                                    <i class="bi bi-play-fill"></i> Run Validation
+                                </a>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    No dataset associated with this rule. Cannot run validation.
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

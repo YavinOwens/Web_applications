@@ -1,0 +1,405 @@
+{% extends "core/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block extra_head %}
+<style>
+    .rule-type-accordion .card-header {
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .rule-type-accordion .card-header:hover {
+        background-color: #f8f9fa;
+    }
+    .suggested-rule-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .suggested-rule-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .suggested-rule-card.selected {
+        border: 2px solid #007bff;
+    }
+    #suggestedRulesContainer {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    #regexGenModal .modal-body {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'core:rule_list' %}">Rules</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Create Rule</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Create New Data Governance Rule</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="form-horizontal" id="ruleCreationForm">
+                        {% csrf_token %}
+                        {% crispy form %}
+                        
+                        <!-- Regex Generator Button -->
+                        <div class="form-group row">
+                            <div class="col-sm-10 offset-sm-2">
+                                <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#regexGenModal">
+                                    Open Regex Generator
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Suggested Rules Section -->
+                    <div class="card mt-3" id="suggestedRulesContainer" style="display:none;">
+                        <div class="card-header">
+                            <h4>Suggested Rules for Selected Column</h4>
+                        </div>
+                        <div class="card-body" id="suggestedRulesList">
+                            <!-- Suggested rules will be dynamically populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="accordion" id="ruleTypeAccordion">
+                <div class="card">
+                    <div class="card-header" id="headingRuleTypes">
+                        <h5 class="mb-0">
+                            <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseRuleTypes" aria-expanded="true" aria-controls="collapseRuleTypes">
+                                Rule Types
+                            </button>
+                        </h5>
+                    </div>
+
+                    <div id="collapseRuleTypes" class="collapse show" aria-labelledby="headingRuleTypes" data-parent="#ruleTypeAccordion">
+                        <div class="card-body">
+                            <div class="list-group">
+                                <a href="#" class="list-group-item list-group-item-action rule-type-item" data-rule-type="range">
+                                    <h5 class="mb-1">Range Rule</h5>
+                                    <p class="mb-1 text-muted">Validate numeric values within a specified range</p>
+                                    <small class="text-success">Example: Age between 0-120</small>
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action rule-type-item" data-rule-type="format">
+                                    <h5 class="mb-1">Format Rule</h5>
+                                    <p class="mb-1 text-muted">Validate data against a specific pattern or format</p>
+                                    <small class="text-success">Example: Email or phone number validation</small>
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action rule-type-item" data-rule-type="unique">
+                                    <h5 class="mb-1">Unique Rule</h5>
+                                    <p class="mb-1 text-muted">Ensure values in a column are unique</p>
+                                    <small class="text-success">Example: User IDs or transaction references</small>
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action rule-type-item" data-rule-type="required">
+                                    <h5 class="mb-1">Required Rule</h5>
+                                    <p class="mb-1 text-muted">Ensure column does not contain null or empty values</p>
+                                    <small class="text-success">Example: Mandatory customer information</small>
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action rule-type-item" data-rule-type="categorical">
+                                    <h5 class="mb-1">Categorical Rule</h5>
+                                    <p class="mb-1 text-muted">Validate against a predefined set of values</p>
+                                    <small class="text-success">Example: Status or category validation</small>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Regex Generator Modal -->
+<div class="modal fade" id="regexGenModal" tabindex="-1" role="dialog" aria-labelledby="regexGenModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="regexGenModalLabel">Regex Generator</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Common Patterns</h6>
+                        <div class="list-group" id="commonRegexPatterns">
+                            <a href="#" class="list-group-item list-group-item-action regex-pattern" data-pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$">Email</a>
+                            <a href="#" class="list-group-item list-group-item-action regex-pattern" data-pattern="^\d{3}-\d{2}-\d{4}$">US Social Security Number</a>
+                            <a href="#" class="list-group-item list-group-item-action regex-pattern" data-pattern="^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$">Phone Number</a>
+                            <a href="#" class="list-group-item list-group-item-action regex-pattern" data-pattern="^[A-Z]{2}\d{5}$">Two Letters + Five Digits</a>
+                            <a href="#" class="list-group-item list-group-item-action regex-pattern" data-pattern="^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$">Date (YYYY-MM-DD)</a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Custom Regex Builder</h6>
+                        <div class="form-group">
+                            <label for="regexInput">Regex Pattern</label>
+                            <input type="text" class="form-control" id="regexInput" placeholder="Enter or generate regex">
+                        </div>
+                        <div class="form-group">
+                            <label for="testInput">Test String</label>
+                            <input type="text" class="form-control" id="testInput" placeholder="Enter a test string">
+                        </div>
+                        <div id="regexTestResult" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="useRegexBtn">Use This Regex</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const datasetSelect = document.getElementById('id_dataset');
+    const columnNameSelect = document.getElementById('id_column_name');
+    const ruleTypeSelect = document.getElementById('id_rule_type');
+    const parametersJsonTextarea = document.getElementById('id_parameters_json');
+    const suggestedRulesContainer = document.getElementById('suggestedRulesContainer');
+    const suggestedRulesList = document.getElementById('suggestedRulesList');
+
+    // Regex Generator Logic
+    const regexInput = document.getElementById('regexInput');
+    const testInput = document.getElementById('testInput');
+    const regexTestResult = document.getElementById('regexTestResult');
+    const useRegexBtn = document.getElementById('useRegexBtn');
+    const commonRegexPatterns = document.querySelectorAll('.regex-pattern');
+
+    // Common Regex Pattern Selection
+    commonRegexPatterns.forEach(pattern => {
+        pattern.addEventListener('click', function() {
+            const selectedPattern = this.dataset.pattern;
+            regexInput.value = selectedPattern;
+            testRegex();
+        });
+    });
+
+    // Regex Testing Function
+    function testRegex() {
+        const pattern = regexInput.value;
+        const testString = testInput.value;
+
+        try {
+            const regex = new RegExp(pattern);
+            const isMatch = regex.test(testString);
+
+            regexTestResult.innerHTML = isMatch 
+                ? `<div class="alert alert-success">Match ✓</div>`
+                : `<div class="alert alert-danger">No Match ✗</div>`;
+        } catch (error) {
+            regexTestResult.innerHTML = `<div class="alert alert-warning">Invalid Regex: ${error.message}</div>`;
+        }
+    }
+
+    // Test Regex on input changes
+    regexInput.addEventListener('input', testRegex);
+    testInput.addEventListener('input', testRegex);
+
+    // Use Selected Regex
+    useRegexBtn.addEventListener('click', function() {
+        const selectedRegex = regexInput.value;
+        if (selectedRegex) {
+            // Update parameters JSON for format rule
+            parametersJsonTextarea.value = JSON.stringify({"pattern": selectedRegex});
+            ruleTypeSelect.value = 'format';
+            $('#regexGenModal').modal('hide');
+        }
+    });
+
+    // Rule type selection
+    document.querySelectorAll('.rule-type-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const ruleType = this.dataset.ruleType;
+            
+            // Remove active class from all items
+            document.querySelectorAll('.rule-type-item').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Add active class to clicked item
+            this.classList.add('active');
+            
+            // Set rule type
+            ruleTypeSelect.value = ruleType;
+
+            // Update parameters JSON based on rule type
+            switch(ruleType) {
+                case 'range':
+                    parametersJsonTextarea.value = JSON.stringify({"min": 0, "max": 100});
+                    break;
+                case 'categorical':
+                    parametersJsonTextarea.value = JSON.stringify({"allowed_values": []});
+                    break;
+                case 'required':
+                case 'unique':
+                    parametersJsonTextarea.value = '{}';
+                    break;
+            }
+        });
+    });
+
+    // Rule type suggestions based on column type
+    const ruleSuggestions = {
+        'numeric': [
+            {
+                type: 'range',
+                name: 'Age Range Validation',
+                description: 'Ensure age is between 0 and 120',
+                parameters: '{"min": 0, "max": 120}'
+            },
+            {
+                type: 'range',
+                name: 'Salary Range',
+                description: 'Validate salary within reasonable bounds',
+                parameters: '{"min": 0, "max": 1000000}'
+            },
+            {
+                type: 'required',
+                name: 'Non-Zero Value',
+                description: 'Ensure the value is not zero',
+                parameters: '{}'
+            }
+        ],
+        'string': [
+            {
+                type: 'format',
+                name: 'Email Validation',
+                description: 'Validate email format',
+                parameters: '{"pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"}'
+            },
+            {
+                type: 'format',
+                name: 'Phone Number',
+                description: 'Validate US phone number format',
+                parameters: '{"pattern": "^\\(\\d{3}\\)\\s\\d{3}-\\d{4}$"}'
+            },
+            {
+                type: 'unique',
+                name: 'Unique Identifier',
+                description: 'Ensure values are unique',
+                parameters: '{}'
+            }
+        ],
+        'categorical': [
+            {
+                type: 'categorical',
+                name: 'Status Validation',
+                description: 'Validate against predefined statuses',
+                parameters: '{"allowed_values": ["active", "inactive", "pending"]}'
+            },
+            {
+                type: 'required',
+                name: 'Mandatory Category',
+                description: 'Ensure a category is selected',
+                parameters: '{}'
+            }
+        ]
+    };
+
+    // Detect column type (this is a simple implementation, might need refinement)
+    function detectColumnType(columnName) {
+        const numericKeywords = ['age', 'salary', 'price', 'count', 'number', 'value'];
+        const categoricalKeywords = ['status', 'type', 'category', 'state'];
+
+        columnName = columnName.toLowerCase();
+
+        if (numericKeywords.some(keyword => columnName.includes(keyword))) return 'numeric';
+        if (categoricalKeywords.some(keyword => columnName.includes(keyword))) return 'categorical';
+        
+        return 'string'; // default
+    }
+
+    // Populate column names when dataset is selected
+    datasetSelect.addEventListener('change', function() {
+        const selectedDatasetId = this.value;
+        
+        // Clear existing options
+        columnNameSelect.innerHTML = '<option value="">Select a column</option>';
+        
+        // Fetch columns for the selected dataset via AJAX
+        fetch(`/get-dataset-columns/${selectedDatasetId}/`)
+            .then(response => response.json())
+            .then(columns => {
+                columns.forEach(column => {
+                    const option = document.createElement('option');
+                    option.value = column;
+                    option.textContent = column;
+                    columnNameSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching columns:', error);
+            });
+    });
+
+    // Show suggested rules when column is selected
+    columnNameSelect.addEventListener('change', function() {
+        const columnName = this.value;
+        const columnType = detectColumnType(columnName);
+        
+        // Clear previous suggestions
+        suggestedRulesList.innerHTML = '';
+        
+        // Show or hide container based on suggestions
+        if (ruleSuggestions[columnType]) {
+            suggestedRulesContainer.style.display = 'block';
+            
+            ruleSuggestions[columnType].forEach(rule => {
+                const ruleCard = document.createElement('div');
+                ruleCard.className = 'card mb-2 suggested-rule-card';
+                ruleCard.innerHTML = `
+                    <div class="card-body" data-rule-type="${rule.type}" data-parameters='${rule.parameters}'>
+                        <h5 class="card-title">${rule.name}</h5>
+                        <p class="card-text text-muted">${rule.description}</p>
+                        <small class="text-success">Rule Type: ${rule.type}</small>
+                    </div>
+                `;
+                
+                ruleCard.addEventListener('click', function() {
+                    // Remove selected from all cards
+                    suggestedRulesList.querySelectorAll('.suggested-rule-card').forEach(card => 
+                        card.classList.remove('selected')
+                    );
+                    
+                    // Select this card
+                    this.classList.add('selected');
+                    
+                    // Set rule type and parameters
+                    ruleTypeSelect.value = this.querySelector('.card-body').dataset.ruleType;
+                    parametersJsonTextarea.value = this.querySelector('.card-body').dataset.parameters;
+                });
+                
+                suggestedRulesList.appendChild(ruleCard);
+            });
+        } else {
+            suggestedRulesContainer.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %} 

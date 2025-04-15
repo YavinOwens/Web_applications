@@ -1,0 +1,196 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Validation Results - {{ rule.name }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/validation.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'core:rule_list' %}">Rules</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ rule.name }} - Validation Results</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="validation-container">
+        <div class="validation-card">
+            <div class="validation-header">
+                <h2 class="validation-title">
+                    <i class="fas fa-check-circle"></i> 
+                    Validation Results for {{ rule.name }}
+                </h2>
+                <div class="btn-group">
+                    <button class="btn btn-outline-primary" onclick="exportFailedRows('{{ validation_record.id }}')">
+                        <i class="fas fa-download"></i> Export Failed Rows
+                    </button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ validation_record.total_rows }}</div>
+                    <div class="stat-label">Total Rows</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ validation_record.passed_rows }}</div>
+                    <div class="stat-label">Passed Rows</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ validation_record.failed_rows|length }}</div>
+                    <div class="stat-label">Failed Rows</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ validation_record.pass_rate|floatformat:1 }}%</div>
+                    <div class="stat-label">Pass Rate</div>
+                </div>
+            </div>
+
+            {% if validation_record.failed_rows %}
+            <div class="failed-rows-section">
+                <div class="failed-rows-header">
+                    <h3 class="failed-rows-title">
+                        <i class="fas fa-exclamation-triangle text-warning"></i> 
+                        Failed Rows ({{ validation_record.failed_rows|length }})
+                    </h3>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-secondary" onclick="toggleAllDetails()">
+                            <i class="fas fa-eye"></i> Toggle All Details
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="failed-rows-table">
+                        <thead>
+                            <tr>
+                                <th>Row #</th>
+                                <th>Column</th>
+                                <th>Value</th>
+                                <th class="status-cell">Status</th>
+                                <th class="message-cell">Message</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in validation_record.failed_rows %}
+                            <tr class="{% if not row.passed %}table-danger{% endif %}">
+                                <td>{{ row.row_number }}</td>
+                                <td>{{ row.column }}</td>
+                                <td>
+                                    <code class="value-display" data-bs-toggle="tooltip" title="{{ row.value }}">
+                                        {{ row.value|truncatechars:50 }}
+                                    </code>
+                                </td>
+                                <td class="status-cell">
+                                    <span class="badge {% if row.passed %}badge-success{% else %}badge-danger{% endif %}">
+                                        {% if row.passed %}Pass{% else %}Fail{% endif %}
+                                    </span>
+                                </td>
+                                <td class="message-cell">
+                                    <span class="error-message" data-bs-toggle="tooltip" title="{{ row.message }}">
+                                        {{ row.message|truncatechars:100 }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary row-details-btn" 
+                                            data-row-id="{{ row.row_number }}"
+                                            onclick="toggleRowDetails('{{ row.row_number }}')">
+                                        <i class="fas fa-chevron-down"></i> Show Details
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr id="details-{{ row.row_number }}" class="details-row">
+                                <td colspan="6">
+                                    <div class="row-details-content">
+                                        <div class="details-section">
+                                            <h5>Row Details</h5>
+                                            <table class="details-table">
+                                                <tr>
+                                                    <th>Full Value:</th>
+                                                    <td><code>{{ row.value }}</code></td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Error Message:</th>
+                                                    <td>{{ row.message }}</td>
+                                                </tr>
+                                                {% if row.context %}
+                                                <tr>
+                                                    <th>Context:</th>
+                                                    <td>
+                                                        <pre>{{ row.context|pprint }}</pre>
+                                                    </td>
+                                                </tr>
+                                                {% endif %}
+                                            </table>
+                                        </div>
+                                        {% if row.suggestions %}
+                                        <div class="suggestions-section">
+                                            <h5>Suggestions</h5>
+                                            <ul class="suggestions-list">
+                                                {% for suggestion in row.suggestions %}
+                                                <li>{{ suggestion }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if validation_record.failed_rows|length > 10 %}
+                <div class="pagination-container mt-3">
+                    <nav aria-label="Failed rows pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if failed_rows.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ failed_rows.previous_page_number }}">
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for num in failed_rows.paginator.page_range %}
+                            <li class="page-item {% if num == failed_rows.number %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endfor %}
+
+                            {% if failed_rows.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ failed_rows.next_page_number }}">
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-check-circle text-success"></i>
+                <p>No failed rows found. All rows passed validation!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/validation.js' %}"></script>
+{% endblock %} 

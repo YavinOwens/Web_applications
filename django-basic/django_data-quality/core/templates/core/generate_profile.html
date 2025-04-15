@@ -1,0 +1,111 @@
+{% extends "core/base.html" %}
+{% load static custom_filters %}
+
+{% block title %}Dataset Profile: {{ dataset.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2>Dataset Profile: {{ dataset.name }}</h2>
+                    <div class="btn-group">
+                        <a href="{% url 'core:dataset_detail' dataset.id %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Dataset
+                        </a>
+                        <button class="btn btn-primary" onclick="downloadProfile()">
+                            <i class="bi bi-download"></i> Download Profile
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card mb-3">
+                                <div class="card-header">Metadata</div>
+                                <div class="card-body">
+                                    <p><strong>Total Rows:</strong> {{ profile_data.metadata.total_rows }}</p>
+                                    <p><strong>Total Columns:</strong> {{ profile_data.metadata.total_columns }}</p>
+                                    <p><strong>File Type:</strong> {{ profile_data.metadata.file_type }}</p>
+                                    <p><strong>File Size:</strong> {{ profile_data.metadata.file_size }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">Column Analysis</div>
+                                <div class="card-body">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Column</th>
+                                                <th>Type</th>
+                                                <th>Missing Values</th>
+                                                <th>Details</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for column, details in profile_data.columns.items %}
+                                            <tr>
+                                                <td>{{ column }}</td>
+                                                <td>{{ details.type }}</td>
+                                                <td>
+                                                    {% with missing_data=profile_data.missing_values|get_item:column %}
+                                                        {% if missing_data %}
+                                                            {{ missing_data.count }} 
+                                                            ({{ missing_data.percentage|floatformat:2 }}%)
+                                                        {% else %}
+                                                            0 (0%)
+                                                        {% endif %}
+                                                    {% endwith %}
+                                                </td>
+                                                <td>
+                                                    {% if details.type == 'numeric' %}
+                                                        Min: {{ details.min|default:"N/A" }}, 
+                                                        Max: {{ details.max|default:"N/A" }}, 
+                                                        Mean: {{ details.mean|floatformat:2|default:"N/A" }}
+                                                    {% elif details.type == 'datetime' %}
+                                                        Min Date: {{ details.min_date|default:"N/A" }}, 
+                                                        Max Date: {{ details.max_date|default:"N/A" }}
+                                                    {% elif details.type == 'categorical' %}
+                                                        Unique Values: {{ details.unique_values }}
+                                                    {% elif details.type == 'string' %}
+                                                        Unique Values: {{ details.unique_values }}
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function downloadProfile() {
+    const profileData = {{ profile_data|safe_json|safe }};
+    const blob = new Blob([JSON.stringify(profileData, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '{{ dataset.name }}_profile.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0,0,0,.05);
+}
+</style>
+{% endblock %} 

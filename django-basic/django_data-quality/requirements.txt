@@ -1,0 +1,7 @@
+pytest
+pytest-django
+pytest-cov
+model_bakery
+pandas==2.1.3
+numpy==1.26.2
+ydata-profiling==4.6.2 

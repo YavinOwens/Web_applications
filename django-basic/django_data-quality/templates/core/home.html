@@ -1,0 +1,72 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>Data Quality Dashboard</h1>
+            
+            {% if error_message %}
+                <div class="alert alert-danger">
+                    <p>{{ error_message }}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    Recent Datasets
+                    <a href="{% url 'core:dataset_upload' %}" class="btn btn-sm btn-success float-right">Upload New Dataset</a>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>File Type</th>
+                                <th>Total Rows</th>
+                                <th>Rules</th>
+                                <th>Validation Results</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dataset_info in recent_datasets %}
+                                {% with dataset=dataset_info.dataset %}
+                                    <tr>
+                                        <td>{{ dataset.name|default:"Unnamed Dataset" }}</td>
+                                        <td>{{ dataset.get_file_type_display|default:"Unknown" }}</td>
+                                        <td>{{ dataset.total_rows|default:"0" }}</td>
+                                        <td>{{ dataset_info.rules_count|default:"0" }}</td>
+                                        <td>{{ dataset_info.validation_results_count|default:"0" }}</td>
+                                        <td>
+                                            {% if dataset.id %}
+                                                <a href="{% url 'core:dataset_detail' dataset.id %}" class="btn btn-sm btn-primary">View Details</a>
+                                            {% else %}
+                                                <a href="{% url 'core:dataset_detail_default' %}" class="btn btn-sm btn-secondary">View Default</a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endwith %}
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">
+                                        No datasets found. 
+                                        <a href="{% url 'core:dataset_upload' %}" class="btn btn-sm btn-primary ml-2">Upload First Dataset</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'core:dataset_upload' %}" class="btn btn-success">Upload New Dataset</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

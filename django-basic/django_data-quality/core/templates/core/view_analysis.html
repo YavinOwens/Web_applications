@@ -1,0 +1,237 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row">
+    <!-- Dataset Info -->
+    <div class="col s12">
+        <div class="card">
+            <div class="card-title">Dataset Overview</div>
+            <div class="card-content">
+                <div class="row">
+                    <div class="col s12 m3">
+                        <div class="stats-card">
+                            <i class="material-icons blue-text">table_rows</i>
+                            <h5>{{ analysis.dataset.total_rows }}</h5>
+                            <p>Total Rows</p>
+                        </div>
+                    </div>
+                    <div class="col s12 m3">
+                        <div class="stats-card">
+                            <i class="material-icons green-text">view_column</i>
+                            <h5>{{ analysis.dataset.total_columns }}</h5>
+                            <p>Total Columns</p>
+                        </div>
+                    </div>
+                    <div class="col s12 m3">
+                        <div class="stats-card">
+                            <i class="material-icons orange-text">warning</i>
+                            <h5>{{ analysis.missing_values.values|sum }}</h5>
+                            <p>Missing Values</p>
+                        </div>
+                    </div>
+                    <div class="col s12 m3">
+                        <div class="stats-card">
+                            <i class="material-icons purple-text">fingerprint</i>
+                            <h5>{{ analysis.unique_values.values|sum }}</h5>
+                            <p>Unique Values</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Quality Visualizations -->
+<div class="row">
+    <div class="col s12">
+        <div class="card">
+            <div class="card-title">Data Quality Analysis</div>
+            <div class="card-content">
+                <ul class="tabs">
+                    <li class="tab col s3"><a class="active" href="#missing_values">Missing Values</a></li>
+                    <li class="tab col s3"><a href="#unique_values">Unique Values</a></li>
+                    <li class="tab col s3"><a href="#distributions">Distributions</a></li>
+                    {% if analysis.numeric_stats %}
+                        <li class="tab col s3"><a href="#statistics">Statistics</a></li>
+                    {% endif %}
+                </ul>
+                
+                <!-- Missing Values Tab -->
+                <div id="missing_values" class="chart-container">
+                    <div id="missing_values_chart"></div>
+                    <div class="row">
+                        <div class="col s12">
+                            <table class="striped">
+                                <thead>
+                                    <tr>
+                                        <th>Column</th>
+                                        <th>Missing Count</th>
+                                        <th>Missing %</th>
+                                        <th>Quality Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for column in analysis.column_names %}
+                                        <tr>
+                                            <td>{{ column }}</td>
+                                            <td>{{ analysis.missing_values|get_item:column }}</td>
+                                            <td>{{ analysis.dataset.total_rows|divide:analysis.missing_values|get_item:column|multiply:100|floatformat:2 }}%</td>
+                                            <td>
+                                                <div class="progress">
+                                                    <div class="determinate" style="width: {{ analysis.dataset.total_rows|divide:analysis.missing_values|get_item:column|multiply:100|floatformat:2 }}%"></div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Unique Values Tab -->
+                <div id="unique_values" class="chart-container">
+                    <div id="unique_values_chart"></div>
+                    <div class="row">
+                        <div class="col s12">
+                            <table class="striped">
+                                <thead>
+                                    <tr>
+                                        <th>Column</th>
+                                        <th>Unique Values</th>
+                                        <th>Cardinality %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for column in analysis.column_names %}
+                                        <tr>
+                                            <td>{{ column }}</td>
+                                            <td>{{ analysis.unique_values|get_item:column }}</td>
+                                            <td>{{ analysis.unique_values|get_item:column|divide:analysis.dataset.total_rows|multiply:100|floatformat:2 }}%</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Distributions Tab -->
+                <div id="distributions" class="chart-container">
+                    {% for column in analysis.column_names %}
+                        <div class="row">
+                            <div class="col s12">
+                                <h5>{{ column }}</h5>
+                                <div id="distribution_{{ forloop.counter }}_chart"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Statistics Tab -->
+                {% if analysis.numeric_stats %}
+                    <div id="statistics" class="chart-container">
+                        <div class="row">
+                            <div class="col s12">
+                                <table class="striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Column</th>
+                                            <th>Mean</th>
+                                            <th>Median</th>
+                                            <th>Std Dev</th>
+                                            <th>Min</th>
+                                            <th>Max</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for column, stats in analysis.numeric_stats.items %}
+                                            <tr>
+                                                <td>{{ column }}</td>
+                                                <td>{{ stats.mean|floatformat:2 }}</td>
+                                                <td>{{ stats.median|floatformat:2 }}</td>
+                                                <td>{{ stats.std|floatformat:2 }}</td>
+                                                <td>{{ stats.min|floatformat:2 }}</td>
+                                                <td>{{ stats.max|floatformat:2 }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="fixed-action-btn">
+    <a class="btn-floating btn-large blue">
+        <i class="large material-icons">more_vert</i>
+    </a>
+    <ul>
+        <li>
+            <a href="{% url 'core:validate_dataset' analysis.dataset.id %}" class="btn-floating orange tooltipped" data-position="left" data-tooltip="Validate Rules">
+                <i class="material-icons">rule</i>
+            </a>
+        </li>
+        <li>
+            <a href="#" class="btn-floating green tooltipped" data-position="left" data-tooltip="Export Report">
+                <i class="material-icons">download</i>
+            </a>
+        </li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tabs
+        var tabs = document.querySelectorAll('.tabs');
+        M.Tabs.init(tabs);
+        
+        // Initialize floating action button
+        var fabs = document.querySelectorAll('.fixed-action-btn');
+        M.FloatingActionButton.init(fabs, {
+            direction: 'left',
+            hoverEnabled: false
+        });
+        
+        // Render plots
+        var missingValuesPlot = {{ plots.missing_values|safe }};
+        var uniqueValuesPlot = {{ plots.unique_values|safe }};
+        
+        Plotly.newPlot('missing_values_chart', missingValuesPlot.data, missingValuesPlot.layout);
+        Plotly.newPlot('unique_values_chart', uniqueValuesPlot.data, uniqueValuesPlot.layout);
+        
+        // Render distribution plots
+        {% for column in analysis.column_names %}
+            var distributionData = {
+                values: Object.values({{ analysis.value_distributions|get_item:column|safe }}),
+                labels: Object.keys({{ analysis.value_distributions|get_item:column|safe }}),
+                type: 'pie'
+            };
+            
+            var layout = {
+                height: 400,
+                title: 'Value Distribution'
+            };
+            
+            Plotly.newPlot('distribution_{{ forloop.counter }}_chart', [distributionData], layout);
+        {% endfor %}
+        
+        // Make plots responsive
+        window.addEventListener('resize', function() {
+            Plotly.Plots.resize('missing_values_chart');
+            Plotly.Plots.resize('unique_values_chart');
+            {% for column in analysis.column_names %}
+                Plotly.Plots.resize('distribution_{{ forloop.counter }}_chart');
+            {% endfor %}
+        });
+    });
+</script>
+{% endblock %} 

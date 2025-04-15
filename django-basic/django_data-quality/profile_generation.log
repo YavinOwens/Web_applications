@@ -1,0 +1,49 @@
+INFO 2024-12-26 21:48:40,391 tasks 26076 6163394560 Starting profile generation for dataset: People
+INFO 2024-12-26 21:48:40,410 tasks 26076 6163394560 Dataset file path: /Users/yavinowens/Documents/python_dev_area/data_quality/media/datasets/processed_criminal_data.csv
+INFO 2024-12-26 21:48:40,417 tasks 26076 6163394560 Dataset loaded successfully with Polars. Shape: (310, 17)
+ERROR 2024-12-26 21:48:40,420 tasks 26076 6163394560 Error reading dataset: module 'polars' has no attribute 'is_numeric_dtype'
+ERROR 2024-12-26 21:48:40,423 tasks 26076 6163394560 Traceback (most recent call last):
+  File "/Users/yavinowens/Documents/python_dev_area/data_quality/core/tasks.py", line 34, in generate_profile_report
+    df = polars_to_pandas(df_polars)
+  File "/Users/yavinowens/Documents/python_dev_area/data_quality/core/utils.py", line 152, in polars_to_pandas
+    if pl.is_numeric_dtype(df_polars[col]):
+  File "/Users/yavinowens/Documents/python_dev_area/dm/lib/python3.9/site-packages/polars/__init__.py", line 437, in __getattr__
+    raise AttributeError(msg)
+AttributeError: module 'polars' has no attribute 'is_numeric_dtype'
+
+INFO 2024-12-26 21:52:35,605 tasks 26101 6208368640 Starting profile generation for dataset: People
+INFO 2024-12-26 21:52:35,606 tasks 26101 6208368640 Dataset file path: /Users/yavinowens/Documents/python_dev_area/data_quality/media/datasets/processed_criminal_data.csv
+INFO 2024-12-26 21:52:35,618 tasks 26101 6208368640 Dataset loaded successfully with Polars. Shape: (310, 17)
+INFO 2024-12-26 21:52:35,621 tasks 26101 6208368640 Converted to Pandas DataFrame. Shape: (310, 17)
+INFO 2024-12-26 21:52:35,633 tasks 26101 6208368640 Profile report generated successfully
+INFO 2024-12-26 21:52:43,259 tasks 26101 6208368640 Profile generation completed for dataset: People
+INFO 2024-12-26 21:52:59,188 tasks 26101 6208368640 Starting profile generation for dataset: People
+INFO 2024-12-26 21:52:59,189 tasks 26101 6208368640 Dataset file path: /Users/yavinowens/Documents/python_dev_area/data_quality/media/datasets/processed_criminal_data.csv
+INFO 2024-12-26 21:52:59,208 tasks 26101 6208368640 Dataset loaded successfully with Polars. Shape: (310, 17)
+INFO 2024-12-26 21:52:59,212 tasks 26101 6208368640 Converted to Pandas DataFrame. Shape: (310, 17)
+INFO 2024-12-26 21:52:59,223 tasks 26101 6208368640 Profile report generated successfully
+INFO 2024-12-26 21:53:06,291 tasks 26101 6208368640 Profile generation completed for dataset: People
+INFO 2024-12-27 09:49:25,110 tasks 1481 6238040064 Starting profile generation for dataset: data
+INFO 2024-12-27 09:49:25,121 tasks 1481 6238040064 Dataset file path: /Users/yavinowens/Documents/python_dev_area/data_quality/media/datasets/addressbase-core-sample_heYa112.csv
+INFO 2024-12-27 09:49:25,172 tasks 1481 6238040064 Dataset loaded successfully with Polars. Shape: (51689, 27)
+INFO 2024-12-27 09:49:25,220 tasks 1481 6238040064 Converted to Pandas DataFrame. Shape: (51689, 27)
+INFO 2024-12-27 09:49:25,226 tasks 1481 6238040064 Profile report generated successfully
+INFO 2024-12-27 09:49:45,888 tasks 1481 6238040064 Profile generation completed for dataset: data
+INFO 2024-12-27 11:22:39,173 tasks 5274 6200733696 Starting profile generation for dataset: People
+INFO 2024-12-27 11:22:39,174 tasks 5274 6200733696 Dataset file path: /Users/yavinowens/Documents/python_dev_area/data_quality/media/datasets/processed_criminal_data.csv
+INFO 2024-12-27 11:22:39,185 tasks 5274 6200733696 Dataset loaded successfully with Polars. Shape: (310, 17)
+INFO 2024-12-27 11:22:39,199 tasks 5274 6200733696 Converted to Pandas DataFrame. Shape: (310, 17)
+INFO 2024-12-27 11:22:39,204 tasks 5274 6200733696 Profile report generated successfully
+INFO 2024-12-27 11:22:46,737 tasks 5274 6200733696 Profile generation completed for dataset: People
+INFO 2024-12-27 11:26:53,606 tasks 6085 6341865472 Starting profile generation for dataset: People
+INFO 2024-12-27 11:26:53,630 tasks 6085 6341865472 Dataset file path: /Users/yavinowens/Documents/python_dev_area/data_quality/media/datasets/processed_criminal_data.csv
+INFO 2024-12-27 11:26:53,637 tasks 6085 6341865472 Dataset loaded successfully with Polars. Shape: (310, 17)
+INFO 2024-12-27 11:26:53,642 tasks 6085 6341865472 Converted to Pandas DataFrame. Shape: (310, 17)
+INFO 2024-12-27 11:26:53,648 tasks 6085 6341865472 Profile report generated successfully
+INFO 2024-12-27 11:27:01,433 tasks 6085 6341865472 Profile generation completed for dataset: People
+INFO 2024-12-27 11:32:41,021 tasks 6310 6199341056 Starting profile generation for dataset: People
+INFO 2024-12-27 11:32:41,043 tasks 6310 6199341056 Dataset file path: /Users/yavinowens/Documents/python_dev_area/data_quality/media/datasets/processed_criminal_data.csv
+INFO 2024-12-27 11:32:41,049 tasks 6310 6199341056 Dataset loaded successfully with Polars. Shape: (310, 17)
+INFO 2024-12-27 11:32:41,056 tasks 6310 6199341056 Converted to Pandas DataFrame. Shape: (310, 17)
+INFO 2024-12-27 11:32:41,063 tasks 6310 6199341056 Profile report generated successfully
+INFO 2024-12-27 11:32:48,707 tasks 6310 6199341056 Profile generation completed for dataset: People

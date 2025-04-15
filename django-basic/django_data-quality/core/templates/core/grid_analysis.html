@@ -1,0 +1,713 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Grid Analysis - {{ dataset.name }}{% endblock %}
+
+{% block extra_head %}
+<!-- AG Grid Styles -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/styles/ag-grid.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/styles/ag-theme-alpine.css">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<style>
+    /* Main container styles */
+    .analysis-container {
+        padding: 24px;
+        background-color: #f0f2f5;
+        min-height: calc(100vh - 56px);
+    }
+
+    /* Header section */
+    .page-header {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 24px;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .page-title {
+        color: #1a365d;
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    /* Stats cards */
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+    }
+
+    .stat-card h3 {
+        margin: 0;
+        font-size: 2.5rem;
+        color: #2563eb;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .stat-card p {
+        margin: 8px 0 0;
+        color: #64748b;
+        font-size: 1rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Toolbar */
+    .toolbar {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .toolbar button {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 8px;
+        background: #2563eb;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(37,99,235,0.2);
+    }
+
+    .toolbar button:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(37,99,235,0.3);
+    }
+
+    .toolbar select {
+        padding: 10px 16px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        min-width: 140px;
+        font-size: 0.95rem;
+        color: #1e293b;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .toolbar select:hover {
+        border-color: #2563eb;
+    }
+
+    .toolbar select:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    /* Grid container */
+    .grid-container {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        height: 600px;
+        width: 100%;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    /* Chart section */
+    .chart-container {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-top: 24px;
+        display: none;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .chart-controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+        margin-bottom: 24px;
+        padding: 20px;
+        background: #f8fafc;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .chart-control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .chart-control-group label {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 0.95rem;
+    }
+
+    .chart-control-group select {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        font-size: 0.95rem;
+        color: #1e293b;
+        transition: all 0.2s ease;
+    }
+
+    .chart-wrapper {
+        height: 450px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .analysis-container {
+            padding: 16px;
+        }
+
+        .stats-container {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .toolbar {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 16px;
+        }
+
+        .toolbar button, .toolbar select {
+            width: 100%;
+        }
+
+        .page-header {
+            padding: 20px;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+        }
+
+        .stat-card {
+            padding: 20px;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analysis-container">
+    <div class="page-header">
+        <h1 class="page-title">{{ dataset.name }} - Grid Analysis</h1>
+    </div>
+    
+    <div class="stats-container">
+        <div class="stat-card">
+            <h3 id="totalRows">0</h3>
+            <p>Total Rows</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="filteredRows">0</h3>
+            <p>Filtered Rows</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="selectedRows">0</h3>
+            <p>Selected Rows</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="totalColumns">0</h3>
+            <p>Total Columns</p>
+        </div>
+    </div>
+    
+    <div class="toolbar">
+        <button onclick="exportToCSV()" class="btn-export">
+            <i class="fas fa-download"></i> Export to CSV
+        </button>
+        <button onclick="clearFilters()" class="btn-clear">
+            <i class="fas fa-filter"></i> Clear Filters
+        </button>
+        <button onclick="autoSizeColumns()" class="btn-resize">
+            <i class="fas fa-arrows-alt-h"></i> Auto-size Columns
+        </button>
+        <button onclick="toggleChartView()" id="toggleChartsBtn" class="btn-chart">
+            <i class="fas fa-chart-bar"></i> Toggle Charts
+        </button>
+        <select id="pageSizeSelect" onchange="updatePageSize()" class="page-size-select">
+            <option value="100">100 rows</option>
+            <option value="250">250 rows</option>
+            <option value="500">500 rows</option>
+            <option value="1000">1000 rows</option>
+        </select>
+    </div>
+    
+    <div class="chart-container" id="chartContainer">
+        <div class="chart-controls">
+            <div class="chart-control-group">
+                <label for="chartTypeSelect">Chart Type</label>
+                <select id="chartTypeSelect" onchange="updateCharts()">
+                    <option value="bar">Bar Chart</option>
+                    <option value="line">Line Chart</option>
+                    <option value="pie">Pie Chart</option>
+                    <option value="histogram">Histogram</option>
+                </select>
+            </div>
+            <div class="chart-control-group">
+                <label for="chartColumnSelect">Column</label>
+                <select id="chartColumnSelect" onchange="updateCharts()"></select>
+            </div>
+        </div>
+        <div class="chart-wrapper" id="chartWrapper"></div>
+    </div>
+    
+    <div id="myGrid" class="ag-theme-alpine grid-container"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- AG Grid Script -->
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/dist/ag-grid-community.min.js"></script>
+<!-- Plotly for charts -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    let gridApi;
+    let columnApi;
+    let chartData = null;
+    let metadata = null;
+    
+    // Utility functions for formatting
+    const numberFormatter = (params) => {
+        if (params.value === null || params.value === undefined) return '';
+        return typeof params.value === 'number' ? params.value.toLocaleString() : params.value;
+    };
+    
+    const dateFormatter = (params) => {
+        if (params.value === null || params.value === undefined) return '';
+        return new Date(params.value).toLocaleString();
+    };
+    
+    // Grid initialization
+    document.addEventListener('DOMContentLoaded', function() {
+        const gridDiv = document.querySelector('#myGrid');
+        
+        const gridOptions = {
+            defaultColDef: {
+                sortable: true,
+                filter: true,
+                resizable: true,
+                minWidth: 100,
+                enableRowGroup: true,
+                enablePivot: true,
+                enableValue: true
+            },
+            rowSelection: 'multiple',
+            rowMultiSelectWithClick: true,
+            pagination: true,
+            paginationPageSize: 100,
+            enableRangeSelection: true,
+            enableCharts: true,
+            onGridReady: onGridReady,
+            onFilterChanged: updateStats,
+            onSelectionChanged: updateStats,
+            components: {
+                checkboxRenderer: CheckboxRenderer
+            },
+            // Add error handling for missing data
+            getRowId: params => params.data ? params.data.id : null,
+            onFirstDataRendered: params => {
+                params.api.sizeColumnsToFit();
+                updateStats();
+            }
+        };
+        
+        // Initialize the grid
+        new agGrid.Grid(gridDiv, gridOptions);
+        gridApi = gridOptions.api;
+        columnApi = gridOptions.columnApi;
+        
+        // Load data immediately
+        loadGridData();
+    });
+    
+    function loadGridData() {
+        // Show loading state
+        if (gridApi) {
+            gridApi.showLoadingOverlay();
+        }
+        
+        fetch(`/api/datasets/{{ dataset.id }}/grid-data/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success' && data.columnDefs && data.rowData) {
+                    console.log('Received data:', data);
+                    metadata = data.metadata;
+                    
+                    // Ensure all required data is present
+                    if (!Array.isArray(data.columnDefs) || !Array.isArray(data.rowData)) {
+                        throw new Error('Invalid data format received from server');
+                    }
+                    
+                    // Set the data
+                    gridApi.setColumnDefs(data.columnDefs);
+                    gridApi.setRowData(data.rowData);
+                    
+                    // Update UI
+                    updateStats();
+                    populateChartColumnSelect();
+                    
+                    // Auto-size columns
+                    columnApi.autoSizeAllColumns();
+                } else {
+                    console.error('Error in data format:', data);
+                    alert('Error in data format received from server');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Show error in the grid
+                gridApi.showNoRowsOverlay();
+                alert(`Error loading data: ${error.message}`);
+            })
+            .finally(() => {
+                // Hide loading overlay
+                if (gridApi) {
+                    gridApi.hideOverlay();
+                }
+            });
+    }
+    
+    function onGridReady(params) {
+        gridApi = params.api;
+        columnApi = params.columnApi;
+        
+        // Set up grid size
+        const gridDiv = document.querySelector('#myGrid');
+        if (gridDiv) {
+            const updateSize = () => {
+                const gridHeight = window.innerHeight - gridDiv.getBoundingClientRect().top - 50;
+                gridDiv.style.height = `${Math.max(400, gridHeight)}px`;
+                params.api.sizeColumnsToFit();
+            };
+            
+            window.addEventListener('resize', updateSize);
+            updateSize();
+        }
+    }
+    
+    function updateStats() {
+        const totalRows = gridApi.getDisplayedRowCount();
+        const filteredRows = gridApi.getModel().getRowCount();
+        const selectedRows = gridApi.getSelectedRows().length;
+        const totalColumns = columnApi.getAllColumns().length;
+        
+        document.getElementById('totalRows').textContent = totalRows.toLocaleString();
+        document.getElementById('filteredRows').textContent = filteredRows.toLocaleString();
+        document.getElementById('selectedRows').textContent = selectedRows.toLocaleString();
+        document.getElementById('totalColumns').textContent = totalColumns.toLocaleString();
+    }
+    
+    // Grid actions
+    function exportToCSV() {
+        if (!gridApi) return;
+        gridApi.exportDataAsCsv({
+            fileName: `${document.title}_export_${new Date().toISOString()}.csv`
+        });
+    }
+    
+    function clearFilters() {
+        if (!gridApi) return;
+        gridApi.setFilterModel(null);
+    }
+    
+    function autoSizeColumns() {
+        if (!columnApi) return;
+        columnApi.autoSizeAllColumns();
+    }
+    
+    function updatePageSize() {
+        if (!gridApi) return;
+        const newPageSize = document.getElementById('pageSizeSelect').value;
+        gridApi.paginationSetPageSize(Number(newPageSize));
+    }
+    
+    // Chart functionality
+    function toggleChartView() {
+        const chartContainer = document.getElementById('chartContainer');
+        const isVisible = chartContainer.style.display !== 'none';
+        chartContainer.style.display = isVisible ? 'none' : 'block';
+        document.getElementById('toggleChartsBtn').classList.toggle('active');
+        
+        if (!isVisible) {
+            updateCharts();
+        }
+    }
+    
+    function populateChartColumnSelect() {
+        const select = document.getElementById('chartColumnSelect');
+        select.innerHTML = '';
+        
+        // Add numeric columns
+        if (metadata.numericColumns.length > 0) {
+            const numericGroup = document.createElement('optgroup');
+            numericGroup.label = 'Numeric Columns';
+            metadata.numericColumns.forEach(col => {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = `${col} (${metadata.uniqueStats[col].uniqueCount} unique values)`;
+                numericGroup.appendChild(option);
+            });
+            select.appendChild(numericGroup);
+        }
+        
+        // Add categorical columns
+        if (metadata.categoricalColumns.length > 0) {
+            const catGroup = document.createElement('optgroup');
+            catGroup.label = 'Categorical Columns';
+            metadata.categoricalColumns.forEach(col => {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = `${col} (${metadata.uniqueStats[col].uniqueCount} unique values)`;
+                catGroup.appendChild(option);
+            });
+            select.appendChild(catGroup);
+        }
+        
+        // Add date columns
+        if (metadata.dateColumns.length > 0) {
+            const dateGroup = document.createElement('optgroup');
+            dateGroup.label = 'Date Columns';
+            metadata.dateColumns.forEach(col => {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = col;
+                dateGroup.appendChild(option);
+            });
+            select.appendChild(dateGroup);
+        }
+        
+        // Add boolean columns
+        if (metadata.booleanColumns.length > 0) {
+            const boolGroup = document.createElement('optgroup');
+            boolGroup.label = 'Boolean Columns';
+            metadata.booleanColumns.forEach(col => {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = col;
+                boolGroup.appendChild(option);
+            });
+            select.appendChild(boolGroup);
+        }
+    }
+    
+    function updateCharts() {
+        const chartType = document.getElementById('chartTypeSelect').value;
+        const selectedColumn = document.getElementById('chartColumnSelect').value;
+        
+        if (!selectedColumn) {
+            document.getElementById('chartWrapper').innerHTML = 'Please select a column to chart';
+            return;
+        }
+        
+        const rowData = [];
+        gridApi.forEachNodeAfterFilter(node => rowData.push(node.data));
+        
+        if (rowData.length === 0) {
+            document.getElementById('chartWrapper').innerHTML = 'No data to display';
+            return;
+        }
+        
+        const values = rowData.map(row => row[selectedColumn]).filter(val => val !== null);
+        
+        if (values.length === 0) {
+            document.getElementById('chartWrapper').innerHTML = 'No valid data to display';
+            return;
+        }
+        
+        let plotData;
+        const layout = {
+            title: selectedColumn,
+            showlegend: true,
+            height: 400,
+            margin: { t: 50, r: 50, b: 100, l: 50 }
+        };
+        
+        // Get column type
+        const isNumeric = metadata.numericColumns.includes(selectedColumn);
+        const isDate = metadata.dateColumns.includes(selectedColumn);
+        const isBoolean = metadata.booleanColumns.includes(selectedColumn);
+        
+        if (isNumeric) {
+            // Numeric data visualization
+            if (chartType === 'histogram') {
+                plotData = [{
+                    x: values,
+                    type: 'histogram',
+                    name: selectedColumn,
+                    nbinsx: 30
+                }];
+                layout.bargap = 0.05;
+            } else if (chartType === 'box') {
+                plotData = [{
+                    y: values,
+                    type: 'box',
+                    name: selectedColumn,
+                    boxpoints: 'outliers'
+                }];
+            } else if (chartType === 'violin') {
+                plotData = [{
+                    y: values,
+                    type: 'violin',
+                    name: selectedColumn,
+                    points: 'outliers'
+                }];
+            } else {
+                const counts = {};
+                values.forEach(val => {
+                    counts[val] = (counts[val] || 0) + 1;
+                });
+                plotData = [{
+                    x: Object.keys(counts),
+                    y: Object.values(counts),
+                    type: chartType,
+                    name: selectedColumn
+                }];
+            }
+        } else if (isDate) {
+            // Date data visualization
+            const dateValues = values.map(v => new Date(v));
+            if (chartType === 'histogram') {
+                plotData = [{
+                    x: dateValues,
+                    type: 'histogram',
+                    name: selectedColumn
+                }];
+                layout.bargap = 0.05;
+            } else {
+                plotData = [{
+                    x: dateValues,
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: selectedColumn
+                }];
+            }
+            layout.xaxis = { type: 'date' };
+        } else {
+            // Categorical/Boolean data visualization
+            const counts = {};
+            values.forEach(val => {
+                counts[val] = (counts[val] || 0) + 1;
+            });
+            
+            if (chartType === 'pie') {
+                plotData = [{
+                    values: Object.values(counts),
+                    labels: Object.keys(counts),
+                    type: 'pie',
+                    name: selectedColumn,
+                    textinfo: 'label+percent',
+                    hoverinfo: 'label+value+percent'
+                }];
+            } else if (chartType === 'donut') {
+                plotData = [{
+                    values: Object.values(counts),
+                    labels: Object.keys(counts),
+                    type: 'pie',
+                    hole: 0.4,
+                    name: selectedColumn,
+                    textinfo: 'label+percent',
+                    hoverinfo: 'label+value+percent'
+                }];
+            } else {
+                plotData = [{
+                    x: Object.keys(counts),
+                    y: Object.values(counts),
+                    type: 'bar',
+                    name: selectedColumn,
+                    text: Object.values(counts),
+                    textposition: 'auto'
+                }];
+                layout.xaxis = { tickangle: -45 };
+            }
+        }
+        
+        // Add null value information if present
+        const nullStats = metadata.nullStats;
+        if (nullStats.columnsWithNulls.includes(selectedColumn)) {
+            const colStats = columnApi.getColumn(selectedColumn).getColDef().valueStats;
+            layout.annotations = [{
+                x: 0.5,
+                y: 1.1,
+                xref: 'paper',
+                yref: 'paper',
+                text: `Null Values: ${colStats.nullCount} (${colStats.nullPercentage.toFixed(2)}%)`,
+                showarrow: false,
+                font: { size: 12 }
+            }];
+        }
+        
+        Plotly.newPlot('chartWrapper', plotData, layout);
+    }
+    
+    // Custom renderers
+    function CheckboxRenderer() {}
+    CheckboxRenderer.prototype.init = function(params) {
+        this.eGui = document.createElement('input');
+        this.eGui.type = 'checkbox';
+        this.eGui.checked = params.value;
+        this.eGui.disabled = true;
+    };
+    CheckboxRenderer.prototype.getGui = function() {
+        return this.eGui;
+    };
+</script>
+{% endblock %}

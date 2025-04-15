@@ -1,0 +1,334 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ dataset.name }} - Details{% endblock %}
+
+{% block extra_head %}
+<style>
+    .dataset-detail-container {
+        padding: 24px;
+        background-color: #f0f2f5;
+        min-height: calc(100vh - 56px);
+    }
+
+    .detail-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid rgba(0,0,0,0.05);
+        margin-bottom: 24px;
+        padding: 24px;
+    }
+
+    .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .detail-title {
+        color: #1a365d;
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .profile-section {
+        margin-top: 24px;
+    }
+
+    .profile-controls {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .profile-config {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    .profile-progress {
+        margin-top: 16px;
+    }
+
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        margin-bottom: 8px;
+    }
+
+    .profile-status {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+    }
+
+    .profile-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1a365d;
+    }
+
+    .stat-label {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin-top: 4px;
+    }
+
+    #profileModal .modal-content {
+        border-radius: 12px;
+    }
+
+    #profileModal .modal-header {
+        background: #f8fafc;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .profile-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .profile-option-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .profile-option-card:hover {
+        border-color: #2563eb;
+        background: #f0f7ff;
+    }
+
+    .profile-option-card.selected {
+        border-color: #2563eb;
+        background: #f0f7ff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dataset-detail-container">
+    <div class="detail-card">
+        <div class="detail-header">
+            <h2 class="detail-title">{{ dataset.name }}</h2>
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileModal">
+                    <i class="fas fa-chart-bar"></i> Generate Profile
+                </button>
+                <a href="{% url 'core:analyze_with_grid' dataset.id %}" class="btn btn-info">
+                    <i class="fas fa-table"></i> Analyze by Grid
+                </a>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ dataset.total_rows|default:"0" }}</div>
+                <div class="stat-label">Total Rows</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ dataset.total_columns|default:"0" }}</div>
+                <div class="stat-label">Total Columns</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ dataset.file_type|upper }}</div>
+                <div class="stat-label">File Type</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ dataset.created_at|date:"M d, Y" }}</div>
+                <div class="stat-label">Created Date</div>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <div class="profile-status">
+                <div>
+                    <h5>Profile Status</h5>
+                    <p class="text-muted mb-0">
+                        {% if dataset.profile_status == 'completed' %}
+                            <i class="fas fa-check-circle text-success"></i> Profile Generated
+                        {% elif dataset.profile_status == 'processing' %}
+                            <i class="fas fa-spinner fa-spin text-primary"></i> Generating Profile
+                        {% elif dataset.profile_status == 'failed' %}
+                            <i class="fas fa-exclamation-circle text-danger"></i> Profile Generation Failed
+                        {% else %}
+                            <i class="fas fa-circle text-secondary"></i> No Profile Generated
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="profile-actions">
+                    {% if dataset.profile_report %}
+                        <a href="{{ dataset.profile_report.url }}" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-external-link-alt"></i> View Profile
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% if dataset.profile_status == 'processing' %}
+                <div class="profile-progress">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 100%"></div>
+                    </div>
+                    <small class="text-muted">Processing your dataset...</small>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Profile Generation Modal -->
+    <div class="modal fade" id="profileModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate Profile Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="profile-config">
+                        <h6>Profile Configuration</h6>
+                        <div class="profile-options">
+                            <div class="profile-option-card selected" data-config="minimal">
+                                <h6><i class="fas fa-bolt"></i> Quick Profile</h6>
+                                <p class="text-muted mb-0">Basic statistics and data quality metrics</p>
+                            </div>
+                            <div class="profile-option-card" data-config="standard">
+                                <h6><i class="fas fa-chart-line"></i> Standard Profile</h6>
+                                <p class="text-muted mb-0">Detailed analysis with visualizations</p>
+                            </div>
+                            <div class="profile-option-card" data-config="complete">
+                                <h6><i class="fas fa-chart-pie"></i> Complete Profile</h6>
+                                <p class="text-muted mb-0">Comprehensive analysis with all metrics</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="generateProfileBtn">
+                        Generate Profile
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const profileCards = document.querySelectorAll('.profile-option-card');
+    let selectedConfig = 'minimal';
+
+    profileCards.forEach(card => {
+        card.addEventListener('click', function() {
+            profileCards.forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedConfig = this.dataset.config;
+        });
+    });
+
+    const generateProfileBtn = document.getElementById('generateProfileBtn');
+    generateProfileBtn.addEventListener('click', function() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
+        modal.hide();
+
+        // Show processing state
+        const profileSection = document.querySelector('.profile-section');
+        profileSection.innerHTML = `
+            <div class="profile-status">
+                <div>
+                    <h5>Profile Status</h5>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-spinner fa-spin text-primary"></i> Generating Profile
+                    </p>
+                </div>
+            </div>
+            <div class="profile-progress">
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 100%"></div>
+                </div>
+                <small class="text-muted">Processing your dataset...</small>
+            </div>
+        `;
+
+        // Start profile generation
+        fetch(`/generate-profile/${selectedConfig}/{{ dataset.id }}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    checkProfileStatus();
+                } else {
+                    showError(data.message);
+                }
+            })
+            .catch(error => showError('Failed to start profile generation'));
+    });
+
+    function checkProfileStatus() {
+        const checkStatus = setInterval(() => {
+            fetch(`/profile-status/{{ dataset.id }}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'completed') {
+                        clearInterval(checkStatus);
+                        location.reload();
+                    } else if (data.status === 'failed') {
+                        clearInterval(checkStatus);
+                        showError('Profile generation failed');
+                    }
+                })
+                .catch(() => {
+                    clearInterval(checkStatus);
+                    showError('Failed to check profile status');
+                });
+        }, 2000);
+    }
+
+    function showError(message) {
+        const profileSection = document.querySelector('.profile-section');
+        profileSection.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i> ${message}
+            </div>
+        `;
+    }
+
+    // Check status on page load if processing
+    {% if dataset.profile_status == 'processing' %}
+        checkProfileStatus();
+    {% endif %}
+});
+</script>
+{% endblock %} 

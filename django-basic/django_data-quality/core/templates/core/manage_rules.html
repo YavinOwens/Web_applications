@@ -1,0 +1,217 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row">
+    <!-- Create Rule Form -->
+    <div class="col s12 m4">
+        <div class="card">
+            <div class="card-title">Create Rule</div>
+            <div class="card-content">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="input-field col s12">
+                            {{ form.name }}
+                            <label for="{{ form.name.id_for_label }}">Rule Name</label>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="input-field col s12">
+                            {{ form.description }}
+                            <label for="{{ form.description.id_for_label }}">Description</label>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="input-field col s12">
+                            {{ form.column_name }}
+                            <label for="{{ form.column_name.id_for_label }}">Column Name</label>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="input-field col s12">
+                            <select name="rule_type" id="{{ form.rule_type.id_for_label }}">
+                                <option value="" disabled selected>Choose rule type</option>
+                                <option value="format">Format Validation</option>
+                                <option value="range">Range Validation</option>
+                                <option value="uniqueness">Uniqueness Check</option>
+                                <option value="required">Required Field</option>
+                                <option value="custom">Custom Rule</option>
+                            </select>
+                            <label>Rule Type</label>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="input-field col s12">
+                            {{ form.rule_parameters }}
+                            <label for="{{ form.rule_parameters.id_for_label }}">Rule Parameters (JSON)</label>
+                            <span class="helper-text">Example: {"min": 0, "max": 100} for range validation</span>
+                        </div>
+                    </div>
+                    
+                    {% if form.errors %}
+                        <div class="row">
+                            <div class="col s12">
+                                <div class="card-panel red lighten-4">
+                                    {% for field in form %}
+                                        {% for error in field.errors %}
+                                            <p class="red-text">{{ error }}</p>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col s12 center-align">
+                            <button class="btn waves-effect waves-light blue" type="submit">
+                                <i class="material-icons left">add</i>
+                                Create Rule
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Existing Rules -->
+    <div class="col s12 m8">
+        <div class="card">
+            <div class="card-title">Existing Rules</div>
+            <div class="card-content">
+                {% if rules %}
+                    <ul class="collection">
+                        {% for rule in rules %}
+                            <li class="collection-item avatar">
+                                <i class="material-icons circle 
+                                    {% if rule.rule_type == 'format' %}blue
+                                    {% elif rule.rule_type == 'range' %}green
+                                    {% elif rule.rule_type == 'uniqueness' %}purple
+                                    {% elif rule.rule_type == 'required' %}orange
+                                    {% else %}grey{% endif %}">rule</i>
+                                <span class="title">{{ rule.name }}</span>
+                                <p>
+                                    {{ rule.description }}<br>
+                                    Column: {{ rule.column_name }}<br>
+                                    Type: {{ rule.get_rule_type_display }}
+                                </p>
+                                <div class="secondary-content">
+                                    <a href="#" class="btn-floating btn-small waves-effect waves-light blue tooltipped" data-position="left" data-tooltip="Edit Rule">
+                                        <i class="material-icons">edit</i>
+                                    </a>
+                                    <a href="#" class="btn-floating btn-small waves-effect waves-light red tooltipped" data-position="left" data-tooltip="Delete Rule">
+                                        <i class="material-icons">delete</i>
+                                    </a>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="center-align">No rules created yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Rule Templates -->
+        <div class="card">
+            <div class="card-title">Rule Templates</div>
+            <div class="card-content">
+                <div class="collection">
+                    <a href="#" class="collection-item avatar template-item" data-template="format">
+                        <i class="material-icons circle blue">format_quote</i>
+                        <span class="title">Format Validation</span>
+                        <p>Validate data format using regex patterns</p>
+                    </a>
+                    <a href="#" class="collection-item avatar template-item" data-template="range">
+                        <i class="material-icons circle green">trending_up</i>
+                        <span class="title">Range Validation</span>
+                        <p>Check if values fall within specified ranges</p>
+                    </a>
+                    <a href="#" class="collection-item avatar template-item" data-template="uniqueness">
+                        <i class="material-icons circle purple">fingerprint</i>
+                        <span class="title">Uniqueness Check</span>
+                        <p>Ensure values in a column are unique</p>
+                    </a>
+                    <a href="#" class="collection-item avatar template-item" data-template="required">
+                        <i class="material-icons circle orange">check_circle</i>
+                        <span class="title">Required Field</span>
+                        <p>Ensure field is not empty or null</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize select
+        var selects = document.querySelectorAll('select');
+        M.FormSelect.init(selects);
+        
+        // Rule templates
+        var templates = {
+            format: {
+                name: 'Format Validation Rule',
+                description: 'Validate data format using regex pattern',
+                rule_type: 'format',
+                parameters: {
+                    pattern: '^[A-Za-z0-9]+$',
+                    message: 'Value must be alphanumeric'
+                }
+            },
+            range: {
+                name: 'Range Validation Rule',
+                description: 'Check if values fall within specified range',
+                rule_type: 'range',
+                parameters: {
+                    min: 0,
+                    max: 100,
+                    message: 'Value must be between 0 and 100'
+                }
+            },
+            uniqueness: {
+                name: 'Uniqueness Check Rule',
+                description: 'Ensure values in column are unique',
+                rule_type: 'uniqueness',
+                parameters: {
+                    message: 'Value must be unique'
+                }
+            },
+            required: {
+                name: 'Required Field Rule',
+                description: 'Ensure field is not empty or null',
+                rule_type: 'required',
+                parameters: {
+                    message: 'Field is required'
+                }
+            }
+        };
+        
+        // Handle template selection
+        document.querySelectorAll('.template-item').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                var template = templates[this.dataset.template];
+                
+                document.querySelector('#id_name').value = template.name;
+                document.querySelector('#id_description').value = template.description;
+                document.querySelector('#id_rule_type').value = template.rule_type;
+                document.querySelector('#id_rule_parameters').value = JSON.stringify(template.parameters, null, 2);
+                
+                // Update Materialize form fields
+                M.updateTextFields();
+                M.FormSelect.init(document.querySelectorAll('select'));
+            });
+        });
+    });
+</script>
+{% endblock %} 

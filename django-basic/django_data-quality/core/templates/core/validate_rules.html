@@ -1,0 +1,174 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Validation Results for {{ dataset.name }}</h2>
+            <p class="text-muted">Dataset ID: {{ dataset.id }}</p>
+        </div>
+    </div>
+
+    <!-- Validation Summary -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Rules</h5>
+                    <h2 class="mb-0">{{ summary.total_rules }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Passed</h5>
+                    <h2 class="mb-0">{{ summary.passed_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Failed</h5>
+                    <h2 class="mb-0">{{ summary.failed_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Errors</h5>
+                    <h2 class="mb-0">{{ summary.error_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Rate Progress -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Validation Success Rate</h5>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {{ summary.success_rate }}%"
+                             aria-valuenow="{{ summary.success_rate }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            {{ summary.success_rate|floatformat:1 }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Validation Results -->
+    <div class="row">
+        <div class="col">
+            <ul class="nav nav-tabs mb-3" id="validationTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="all-tab" data-toggle="tab" href="#all" role="tab">
+                        All Results ({{ summary.total_rules }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="passed-tab" data-toggle="tab" href="#passed" role="tab">
+                        Passed ({{ summary.passed_count }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="failed-tab" data-toggle="tab" href="#failed" role="tab">
+                        Failed ({{ summary.failed_count }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="errors-tab" data-toggle="tab" href="#errors" role="tab">
+                        Errors ({{ summary.error_count }})
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="validationTabContent">
+                <!-- All Results Tab -->
+                <div class="tab-pane fade show active" id="all" role="tabpanel">
+                    {% for result in validation_results %}
+                        {% include 'core/includes/validation_result_card.html' with result=result %}
+                    {% endfor %}
+                </div>
+
+                <!-- Passed Results Tab -->
+                <div class="tab-pane fade" id="passed" role="tabpanel">
+                    {% for result in grouped_results.passed %}
+                        {% include 'core/includes/validation_result_card.html' with result=result %}
+                    {% endfor %}
+                </div>
+
+                <!-- Failed Results Tab -->
+                <div class="tab-pane fade" id="failed" role="tabpanel">
+                    {% for result in grouped_results.failed %}
+                        {% include 'core/includes/validation_result_card.html' with result=result %}
+                    {% endfor %}
+                </div>
+
+                <!-- Error Results Tab -->
+                <div class="tab-pane fade" id="errors" role="tabpanel">
+                    {% for result in grouped_results.error %}
+                        {% include 'core/includes/validation_result_card.html' with result=result %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Validation History Modal -->
+<div class="modal fade" id="historyModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Validation History</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="historyContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showHistory(ruleId) {
+    const history = {{ validation_history|safe }};
+    const ruleHistory = history[ruleId];
+    
+    let content = '<div class="table-responsive"><table class="table">';
+    content += '<thead><tr><th>Date</th><th>Status</th><th>Violations</th><th>Duration</th></tr></thead><tbody>';
+    
+    ruleHistory.forEach(result => {
+        const status = result.passed ? 
+            '<span class="badge badge-success">Passed</span>' : 
+            '<span class="badge badge-danger">Failed</span>';
+            
+        content += `<tr>
+            <td>${new Date(result.validation_date).toLocaleString()}</td>
+            <td>${status}</td>
+            <td>${result.failed_rows ? Object.keys(result.failed_rows.indices).length : 0}</td>
+            <td>${result.execution_time ? result.execution_time.toFixed(2) + 's' : 'N/A'}</td>
+        </tr>`;
+    });
+    
+    content += '</tbody></table></div>';
+    
+    $('#historyContent').html(content);
+    $('#historyModal').modal('show');
+}
+</script>
+{% endblock %} 

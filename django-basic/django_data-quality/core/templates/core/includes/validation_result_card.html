@@ -1,0 +1,79 @@
+{% load humanize %}
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center
+                {% if result.status == 'pass' %}bg-success text-white
+                {% elif result.status == 'fail' %}bg-warning
+                {% else %}bg-danger text-white{% endif %}">
+        <h5 class="card-title mb-0">{{ result.rule_name }}</h5>
+        <div>
+            <span class="badge badge-light mr-2">
+                {{ result.execution_time|floatformat:2 }}s
+            </span>
+            <button class="btn btn-sm btn-light" onclick="showHistory('{{ result.rule_id }}')">
+                <i class="fas fa-history"></i> History
+            </button>
+        </div>
+    </div>
+    
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Status:</strong> 
+                    {% if result.status == 'pass' %}
+                        <span class="badge badge-success">Passed</span>
+                    {% elif result.status == 'fail' %}
+                        <span class="badge badge-warning">Failed</span>
+                    {% else %}
+                        <span class="badge badge-danger">Error</span>
+                    {% endif %}
+                </p>
+                <p><strong>Message:</strong> {{ result.message }}</p>
+                {% if result.status == 'fail' %}
+                    <p>
+                        <strong>Violations:</strong> 
+                        {{ result.violation_count|intcomma }} / {{ result.total_count|intcomma }}
+                        ({{ result.violation_percentage|floatformat:1 }}%)
+                    </p>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                {% if result.status == 'fail' and result.violation_indices %}
+                    <div class="violations-summary">
+                        <h6>Sample Violations:</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Row</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for index, value in result.violation_indices|slice:":5"|zip:result.violation_values|slice:":5" %}
+                                    <tr>
+                                        <td>{{ index }}</td>
+                                        <td>{{ value }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if result.violation_indices|length > 5 %}
+                            <p class="text-muted">
+                                ... and {{ result.violation_indices|length|add:"-5"|intcomma }} more violations
+                            </p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if result.status == 'error' %}
+            <div class="alert alert-danger mt-3">
+                <i class="fas fa-exclamation-triangle"></i>
+                {{ result.message }}
+            </div>
+        {% endif %}
+    </div>
+</div> 

@@ -1,0 +1,138 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row dashboard-stats">
+    <div class="col s12 m4">
+        <div class="card stats-card">
+            <i class="material-icons blue-text">storage</i>
+            <h5>{{ datasets.count }}</h5>
+            <p>Total Datasets</p>
+        </div>
+    </div>
+    <div class="col s12 m4">
+        <div class="card stats-card">
+            <i class="material-icons green-text">analytics</i>
+            <h5>{{ recent_analyses.count }}</h5>
+            <p>Recent Analyses</p>
+        </div>
+    </div>
+    <div class="col s12 m4">
+        <div class="card stats-card">
+            <i class="material-icons orange-text">rule</i>
+            <h5>{{ rules.count|default:0 }}</h5>
+            <p>Active Rules</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Datasets -->
+    <div class="col s12 m6">
+        <div class="card">
+            <div class="card-title">Recent Datasets</div>
+            <div class="card-content">
+                {% if datasets %}
+                    <ul class="collection">
+                        {% for dataset in datasets|slice:":5" %}
+                            <li class="collection-item avatar">
+                                <i class="material-icons circle blue">insert_drive_file</i>
+                                <span class="title">{{ dataset.name }}</span>
+                                <p>
+                                    Uploaded: {{ dataset.uploaded_at|date:"M d, Y" }}<br>
+                                    Type: {{ dataset.file_type|upper }}
+                                </p>
+                                <div class="secondary-content">
+                                    <a href="{% url 'core:dataset_analyze' dataset.id %}" class="btn-floating btn-small waves-effect waves-light blue tooltipped" data-position="left" data-tooltip="Analyze Dataset">
+                                        <i class="material-icons">analytics</i>
+                                    </a>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    {% if datasets.count > 5 %}
+                        <div class="center-align" style="margin-top: 20px;">
+                            <a href="#" class="btn waves-effect waves-light blue">View All Datasets</a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="center-align">No datasets uploaded yet.</p>
+                    <div class="center-align">
+                        <a href="{% url 'core:dataset_upload' %}" class="btn waves-effect waves-light blue">
+                            <i class="material-icons left">upload</i>Upload Dataset
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Analyses -->
+    <div class="col s12 m6">
+        <div class="card">
+            <div class="card-title">Recent Analyses</div>
+            <div class="card-content">
+                {% if recent_analyses %}
+                    <ul class="collection">
+                        {% for analysis in recent_analyses %}
+                            <li class="collection-item avatar">
+                                <i class="material-icons circle green">assessment</i>
+                                <span class="title">Analysis of {{ analysis.dataset.name }}</span>
+                                <p>
+                                    Analyzed: {{ analysis.analyzed_at|date:"M d, Y" }}<br>
+                                    Columns: {{ analysis.column_names|length }}
+                                </p>
+                                <div class="secondary-content">
+                                    <a href="{% url 'view_analysis' analysis.id %}" class="btn-floating btn-small waves-effect waves-light green tooltipped" data-position="left" data-tooltip="View Analysis">
+                                        <i class="material-icons">visibility</i>
+                                    </a>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="center-align">No analyses performed yet.</p>
+                    {% if datasets %}
+                        <div class="center-align">
+                            <a href="{% url 'core:dataset_analyze' datasets.first.id %}" class="btn waves-effect waves-light green">
+                                <i class="material-icons left">analytics</i>Start Analysis
+                            </a>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="fixed-action-btn">
+    <a class="btn-floating btn-large blue">
+        <i class="large material-icons">add</i>
+    </a>
+    <ul>
+        <li>
+            <a href="{% url 'core:dataset_upload' %}" class="btn-floating blue tooltipped" data-position="left" data-tooltip="Upload Dataset">
+                <i class="material-icons">upload</i>
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'core:rule_list' %}" class="btn-floating orange tooltipped" data-position="left" data-tooltip="Manage Rules">
+                <i class="material-icons">rule</i>
+            </a>
+        </li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize floating action button
+        var elems = document.querySelectorAll('.fixed-action-btn');
+        M.FloatingActionButton.init(elems, {
+            direction: 'left',
+            hoverEnabled: false
+        });
+    });
+</script>
+{% endblock %} 

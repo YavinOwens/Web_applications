@@ -1,0 +1,367 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Bulk Validation Results - {{ dataset.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .bulk-validation-container {
+        padding: 24px;
+        background-color: #f0f2f5;
+        min-height: calc(100vh - 56px);
+    }
+
+    .validation-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid rgba(0,0,0,0.05);
+        margin-bottom: 24px;
+        padding: 24px;
+    }
+
+    .validation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .validation-title {
+        color: #1a365d;
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1a365d;
+    }
+
+    .stat-label {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin-top: 4px;
+    }
+
+    .results-section {
+        margin-top: 24px;
+    }
+
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .results-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1a365d;
+        margin: 0;
+    }
+
+    .validation-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .validation-table th {
+        background: #f8fafc;
+        padding: 12px;
+        font-weight: 600;
+        color: #1a365d;
+        text-align: left;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .validation-table td {
+        padding: 12px;
+        border-bottom: 1px solid #e2e8f0;
+        color: #475569;
+    }
+
+    .validation-table tr:hover td {
+        background: #f8fafc;
+    }
+
+    .badge {
+        padding: 6px 12px;
+        border-radius: 9999px;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .badge-success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .error-section {
+        margin-top: 24px;
+        padding: 16px;
+        background: #fee2e2;
+        border-radius: 8px;
+        border: 1px solid #fecaca;
+    }
+
+    .error-title {
+        color: #991b1b;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .error-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .error-item {
+        padding: 8px;
+        border-bottom: 1px solid #fecaca;
+    }
+
+    .error-item:last-child {
+        border-bottom: none;
+    }
+
+    .error-rule {
+        font-weight: 500;
+        color: #991b1b;
+    }
+
+    .error-message {
+        color: #7f1d1d;
+        margin-top: 4px;
+        font-size: 0.9rem;
+    }
+
+    .export-section {
+        margin-top: 24px;
+        text-align: right;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bulk-validation-container">
+    <div class="validation-card">
+        <div class="validation-header">
+            <h2 class="validation-title">Bulk Validation Results: {{ dataset.name }}</h2>
+            <div class="btn-group">
+                <a href="{% url 'core:dataset_detail' dataset.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dataset
+                </a>
+                <button class="btn btn-primary" onclick="exportAllResults()">
+                    <i class="fas fa-download"></i> Export All Results
+                </button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ total_rules }}</div>
+                <div class="stat-label">Total Rules</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ success_count }}</div>
+                <div class="stat-label">Successful Validations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ failed_count }}</div>
+                <div class="stat-label">Failed Validations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ success_rate|floatformat:1 }}%</div>
+                <div class="stat-label">Success Rate</div>
+            </div>
+        </div>
+
+        {% if failed_validations %}
+        <div class="error-section">
+            <h3 class="error-title">
+                <i class="fas fa-exclamation-triangle"></i> 
+                Failed Validations ({{ failed_validations|length }})
+            </h3>
+            <ul class="error-list">
+                {% for failure in failed_validations %}
+                <li class="error-item">
+                    <div class="error-rule">{{ failure.rule.name }}</div>
+                    <div class="error-message">{{ failure.error }}</div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="results-section">
+            <div class="results-header">
+                <h3 class="results-title">Validation Results</h3>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="toggleAllDetails()">
+                        <i class="fas fa-eye"></i> Toggle All Details
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="validation-table">
+                    <thead>
+                        <tr>
+                            <th>Rule Name</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Pass Rate</th>
+                            <th>Failed Rows</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in validation_results %}
+                        <tr>
+                            <td>{{ result.rule.name }}</td>
+                            <td>{{ result.rule.get_rule_type_display }}</td>
+                            <td>
+                                <span class="badge {% if result.passed %}badge-success{% else %}badge-danger{% endif %}">
+                                    {% if result.passed %}Passed{% else %}Failed{% endif %}
+                                </span>
+                            </td>
+                            <td>{{ result.pass_rate|floatformat:1 }}%</td>
+                            <td>{{ result.failed_rows|length }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'core:rule_validate' result.rule.id %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            onclick="exportResults('{{ result.id }}')">
+                                        <i class="fas fa-download"></i> Export
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+
+function exportResults(validationId) {
+    fetch('/api/export-validation-results/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            validationId: validationId,
+            datasetId: '{{ dataset.id }}'
+        })
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `validation_results_${validationId}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to export results. Please try again.');
+    });
+}
+
+function exportAllResults() {
+    fetch('/api/export-all-validation-results/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            datasetId: '{{ dataset.id }}'
+        })
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `all_validation_results_{{ dataset.id }}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to export results. Please try again.');
+    });
+}
+
+function toggleAllDetails() {
+    const detailButtons = document.querySelectorAll('.btn-outline-primary');
+    detailButtons.forEach(button => button.click());
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 

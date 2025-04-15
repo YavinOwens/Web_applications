@@ -1,0 +1,9 @@
+faker
+pandas
+sqlalchemy
+pysqlite3
+langchain
+langchain_community 
+langchain_openai
+streamlit 
+python-dotenv

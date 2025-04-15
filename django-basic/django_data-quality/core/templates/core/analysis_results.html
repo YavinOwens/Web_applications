@@ -1,0 +1,154 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Analysis Results for {{ dataset.name }}</h2>
+    
+    {% if analysis.numeric_stats %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4>Numeric Statistics</h4>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Column</th>
+                        <th>Mean</th>
+                        <th>Median</th>
+                        <th>Std Dev</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                        <th>Q1</th>
+                        <th>Q3</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for col, stats in analysis.numeric_stats.items %}
+                    <tr>
+                        <td>{{ col }}</td>
+                        <td>{{ stats.mean|floatformat:2 }}</td>
+                        <td>{{ stats.median|floatformat:2 }}</td>
+                        <td>{{ stats.std|floatformat:2 }}</td>
+                        <td>{{ stats.min|floatformat:2 }}</td>
+                        <td>{{ stats.max|floatformat:2 }}</td>
+                        <td>{{ stats.q1|floatformat:2 }}</td>
+                        <td>{{ stats.q3|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if analysis.correlation_matrix %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4>Correlation Matrix</h4>
+            <div id="correlation-heatmap"></div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if analysis.missing_value_stats %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4>Missing Values</h4>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Column</th>
+                        <th>Missing Count</th>
+                        <th>Missing Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for col, stats in analysis.missing_value_stats.items %}
+                    <tr>
+                        <td>{{ col }}</td>
+                        <td>{{ stats.missing_count }}</td>
+                        <td>{{ stats.missing_percentage|floatformat:2 }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if analysis.outlier_stats %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4>Outlier Detection</h4>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Column</th>
+                        <th>Outlier Count</th>
+                        <th>Outlier Percentage</th>
+                        <th>Lower Bound</th>
+                        <th>Upper Bound</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for col, stats in analysis.outlier_stats.items %}
+                    <tr>
+                        <td>{{ col }}</td>
+                        <td>{{ stats.count }}</td>
+                        <td>{{ stats.percentage|floatformat:2 }}%</td>
+                        <td>{{ stats.lower_bound|floatformat:2 }}</td>
+                        <td>{{ stats.upper_bound|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    
+</div>
+{% endblock %}
+
+{% block extra_css %}
+    <!-- Add Plotly.js -->
+    <link rel="stylesheet" href="https://cdn.plot.ly/plotly-2.24.1.min.css">
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Add Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    
+    {% if analysis.correlation_matrix %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var correlationData = {{ analysis.correlation_matrix|safe }};
+            var columns = Object.keys(correlationData);
+            var data = [];
+            
+            // Convert the correlation matrix to the format Plotly expects
+            for (var i = 0; i < columns.length; i++) {
+                for (var j = 0; j < columns.length; j++) {
+                    data.push([i, j, correlationData[columns[i]][columns[j]]]);
+                }
+            }
+            
+            var plotData = [{
+                type: 'heatmap',
+                x: columns,
+                y: columns,
+                z: data.map(d => d[2]),
+                colorscale: 'RdBu',
+                zmin: -1,
+                zmax: 1
+            }];
+
+            var layout = {
+                title: 'Correlation Matrix',
+                width: 800,
+                height: 800
+            };
+
+            Plotly.newPlot('correlation-heatmap', plotData, layout);
+        });
+    </script>
+    {% endif %}
+{% endblock %} 

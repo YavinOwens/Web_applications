@@ -1,0 +1,78 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Logged Out - Data Quality Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .logout-container {
+        max-width: 400px;
+        margin: 40px auto;
+        text-align: center;
+    }
+    
+    .logout-card {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .logout-header {
+        margin-bottom: 30px;
+    }
+    
+    .logout-header img {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 20px;
+    }
+    
+    .logout-header h1 {
+        font-size: 24px;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .logout-header p {
+        color: #666;
+        font-size: 14px;
+    }
+    
+    .btn-login {
+        width: 100%;
+        height: 45px;
+        font-size: 16px;
+        font-weight: 500;
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="logout-container">
+        <div class="logout-card">
+            <div class="logout-header">
+                <img src="{% static 'core/img/logo.png' %}" alt="Logo" onerror="this.style.display='none'">
+                <h1>You've Been Logged Out</h1>
+                <p>Thank you for using the Data Quality Management System</p>
+            </div>
+            
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <a href="{% url 'core:login' %}" class="btn btn-primary btn-login">
+                Sign In Again
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

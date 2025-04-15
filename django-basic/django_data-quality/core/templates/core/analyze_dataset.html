@@ -1,0 +1,130 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col s12 m8 offset-m2">
+        <div class="card">
+            <div class="card-title">Analyze Dataset: {{ dataset.name }}</div>
+            <div class="card-content">
+                <div class="row">
+                    <div class="col s12">
+                        <p>Configure the analysis settings below:</p>
+                    </div>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col s12">
+                            <label>
+                                {{ config_form.include_statistics }}
+                                <span>Include Statistical Analysis</span>
+                            </label>
+                            <p class="helper-text">Calculate mean, median, standard deviation, etc. for numeric columns</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col s12">
+                            <label>
+                                {{ config_form.analyze_correlations }}
+                                <span>Analyze Correlations</span>
+                            </label>
+                            <p class="helper-text">Find relationships between numeric columns</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col s12">
+                            <label>
+                                {{ config_form.detect_outliers }}
+                                <span>Detect Outliers</span>
+                            </label>
+                            <p class="helper-text">Identify unusual values in numeric columns</p>
+                        </div>
+                    </div>
+                    
+                    {% if config_form.errors %}
+                        <div class="row">
+                            <div class="col s12">
+                                <div class="card-panel red lighten-4">
+                                    {% for field in config_form %}
+                                        {% for error in field.errors %}
+                                            <p class="red-text">{{ error }}</p>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col s12 center-align">
+                            <button class="btn-large waves-effect waves-light green" type="submit">
+                                <i class="material-icons left">analytics</i>
+                                Start Analysis
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Dataset Info -->
+        <div class="card">
+            <div class="card-title">Dataset Information</div>
+            <div class="card-content">
+                <table class="striped">
+                    <tbody>
+                        <tr>
+                            <th>Name:</th>
+                            <td>{{ dataset.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Type:</th>
+                            <td>{{ dataset.file_type|upper }}</td>
+                        </tr>
+                        <tr>
+                            <th>Uploaded:</th>
+                            <td>{{ dataset.uploaded_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Total Rows:</th>
+                            <td>{{ dataset.total_rows|default:"Unknown" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Total Columns:</th>
+                            <td>{{ dataset.total_columns|default:"Unknown" }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize form elements
+        M.updateTextFields();
+        
+        // Add validation for sample size
+        var sampleSizeInput = document.getElementById('{{ config_form.sample_size.id_for_label }}');
+        if (sampleSizeInput) {
+            sampleSizeInput.addEventListener('change', function() {
+                var value = parseInt(this.value);
+                if (value && value < 1000) {
+                    M.toast({html: 'Sample size should be at least 1,000'});
+                    this.value = 1000;
+                } else if (value && value > 1000000) {
+                    M.toast({html: 'Sample size cannot exceed 1,000,000'});
+                    this.value = 1000000;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %} 

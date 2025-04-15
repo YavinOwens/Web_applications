@@ -1,0 +1,1 @@
+can you create validation rules for HR that are aligned with PII and GDPR rule for  this table. create 5 rules for each column ensure each column has 10 validation rules as a minimum

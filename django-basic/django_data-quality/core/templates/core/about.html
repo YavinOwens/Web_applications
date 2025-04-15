@@ -1,0 +1,90 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="text-center mb-0">About Data Quality Management Platform</h1>
+                </div>
+                <div class="card-body p-5">
+                    <section class="mb-4">
+                        <h2 class="border-bottom pb-2 mb-3">Introduction</h2>
+                        <p class="lead">
+                            The Data Quality Management Platform is a comprehensive solution designed to help organizations 
+                            ensure the integrity, accuracy, and reliability of their data through advanced validation, 
+                            profiling, and monitoring tools.
+                        </p>
+                    </section>
+
+                    <section class="mb-4">
+                        <h2 class="border-bottom pb-2 mb-3">Key Features</h2>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <strong>Dataset Upload and Management</strong>: 
+                                Easily upload and manage datasets from various file formats
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Data Validation Rules</strong>: 
+                                Create custom validation rules to ensure data quality
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Data Profiling</strong>: 
+                                Generate comprehensive statistical insights about your datasets
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Rule-Based Validation</strong>: 
+                                Apply complex validation rules across different columns and data types
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Visualization and Reporting</strong>: 
+                                Interactive dashboards and detailed validation reports
+                            </li>
+                        </ul>
+                    </section>
+
+                    <section class="mb-4">
+                        <h2 class="border-bottom pb-2 mb-3">How to Use</h2>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h4 class="card-title">1. Upload Dataset</h4>
+                                        <p>Navigate to the dataset upload page and select your file.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h4 class="card-title">2. Create Rules</h4>
+                                        <p>Define validation rules for your dataset's columns.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h4 class="card-title">3. Run Validation</h4>
+                                        <p>Execute validation and review detailed results.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2 class="border-bottom pb-2 mb-3">Technical Details</h2>
+                        <p>
+                            Built with Django, this platform leverages modern web technologies 
+                            to provide a robust and scalable data quality management solution.
+                        </p>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

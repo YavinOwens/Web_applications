@@ -1,0 +1,30 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Project Documentation</h2>
+                </div>
+                <div class="card-body">
+                    <div class="markdown-content">
+                        {{ documentation_content|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .markdown-content h1 { margin-bottom: 20px; color: #333; }
+    .markdown-content h2 { margin-top: 20px; margin-bottom: 15px; color: #444; }
+    .markdown-content p { line-height: 1.6; }
+    .markdown-content ul, .markdown-content ol { margin-left: 20px; }
+</style>
+{% endblock %} 

@@ -1,0 +1,118 @@
+{% extends "core/base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Validation Results</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Total Validation Results</h5>
+                    <p class="card-text display-4 text-primary">{{ total_results }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Passed Results</h5>
+                    <p class="card-text display-4 text-success">{{ passed_count }}</p>
+                    <small class="text-muted">
+                        {% if total_results > 0 %}
+                            {{ passed_count|multiply:100.0|divide:total_results|floatformat:2 }} %
+                        {% else %}
+                            0.00 %
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Failed Results</h5>
+                    <p class="card-text display-4 text-danger">{{ failed_count }}</p>
+                    <small class="text-muted">
+                        {% if total_results > 0 %}
+                            {{ failed_count|multiply:100.0|divide:total_results|floatformat:2 }} %
+                        {% else %}
+                            0.00 %
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Validation Results Details</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Dataset</th>
+                                    <th>Rule</th>
+                                    <th>Validation Date</th>
+                                    <th>Status</th>
+                                    <th>Failed Rows</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in results %}
+                                <tr class="{% if result.passed %}table-success{% else %}table-danger{% endif %}">
+                                    <td>{{ result.dataset.name }}</td>
+                                    <td>{{ result.rule.name }}</td>
+                                    <td>{{ result.validation_date|date:"Y-m-d H:i" }}</td>
+                                    <td>
+                                        {% if result.passed %}
+                                            <span class="badge bg-success">Passed</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Failed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if result.failed_rows %}
+                                            {{ result.failed_rows|length }}
+                                        {% else %}
+                                            0
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'core:rule_detail' result.rule.id %}" class="btn btn-sm btn-info">
+                                            <i class="bi bi-eye"></i> View Rule
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">
+                                        No validation results found.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
