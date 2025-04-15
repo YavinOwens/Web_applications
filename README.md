@@ -1,56 +1,50 @@
 # Web Applications Repository
 
-This repository contains a collection of web applications built using Django and Streamlit frameworks, showcasing various implementations of AI-powered features and basic web development concepts.
+A collection of web applications built using Django and Streamlit frameworks, featuring AI-powered chatbots, data management tools, and interactive visualizations.
 
 ## Repository Structure
 
-| Directory | Framework | Type | Python Version | Requirements | Key Features | Data Sources | Use Cases |
-|-----------|-----------|------|----------------|--------------|-------------|--------------|-----------|
-| [django-basic/](django-basic/) | Django | Data Quality | 3.8+ | [requirements.txt](django-basic/django_data-quality/requirements.txt) | - Dataset validation<br>- Data governance rules<br>- Data profiling<br>- Rule management | CSV, Excel, SQL | Data quality management, Data governance |
-| [django-basic-ai/](django-basic-ai/) | Django | AI Integration | 3.8+ | [requirements.txt](django-basic-ai/django_data_ai_app/requirements.txt) | - Chatbot implementations<br>- Data analysis tools<br>- AI processing | Text, Databases | AI-powered data analysis, Chat interfaces |
-| [streamlit-basic/](streamlit-basic/) | Streamlit | Basic Apps | 3.8+ | [requirements.txt](streamlit-basic/CRUD_APP/requirements.txt) | - CRUD operations<br>- Mapping features<br>- Data visualization | CSV, JSON | Simple web apps, Location tracking |
-| [streamlit-basic-ai/](streamlit-basic-ai/) | Streamlit | AI Apps | 3.8+ | [reqs.txt](streamlit-basic-ai/Streamlit_openai_chatbots/root_app/reqs.txt) | - OpenAI chatbots<br>- Document analysis<br>- Meeting assistant | Websites, PDFs, SQL, CSV | AI assistants, Document processing |
+| Directory | Framework | Type | Key Features | Data Sources | Use Cases | Python Version | Requirements |
+|-----------|-----------|------|-------------|--------------|-----------|----------------|--------------|
+| django-basic/ | Django | Basic | Data quality management, CRUD operations | CSV, SQLite | Data validation, Quality control | 3.8+ | [requirements.txt](django-basic/django_data-quality/requirements.txt) |
+| django-basic-ai/ | Django | AI | Chatbots, Data analysis | PDFs, Databases | Document analysis, Customer support | 3.8+ | [requirements.txt](django-basic-ai/django_ai_chatbot/requirements.txt) |
+| streamlit-basic/ | Streamlit | Basic | CRUD, Mapping | CSV, GeoJSON | Data visualization, Location tracking | 3.8+ | [requirements.txt](streamlit-basic/streamlit_CRUD/requirements.txt) |
+| streamlit-basic-ai/ | Streamlit | AI | OpenAI chatbots, Meeting assistant | PDFs, Databases, Websites | Document analysis, Meeting summaries | 3.8+ | [reqs.txt](streamlit-basic-ai/Streamlit_openai_chatbots/root_app/reqs.txt) |
 
 ## Detailed Breakdown
 
 ### Data Processing Capabilities
 
-| Tool | Python Version | Requirements | Input Formats | Processing Features | Output Formats |
-|------|---------------|--------------|--------------|---------------------|----------------|
-| Data Quality Manager | 3.8+ | [requirements.txt](django-basic/django_data-quality/requirements.txt) | CSV, Excel, SQL | Validation, Profiling, Rules | Reports, Visualizations |
-| AI Chatbots | 3.8+ | [reqs.txt](streamlit-basic-ai/Streamlit_openai_chatbots/root_app/reqs.txt) | Text, PDF, SQL | NLP, Analysis, Querying | Text responses, Data insights |
-| Mapping Tools | 3.8+ | [reqs.txt](streamlit-basic/maps_app/root_app/reqs.txt) | CSV, GeoJSON | Location tracking, Visualization | Interactive maps |
-| Document Processors | 3.8+ | [reqs.txt](streamlit-basic-ai/Streamlit_openai_chatbots/open_ai_chatbot_talk_with_n_pdfs/reqs.txt) | PDF, Text | Analysis, Extraction | Summaries, Insights |
+| Input Format | Processing Features | Output Format | Python Version | Requirements |
+|--------------|---------------------|---------------|----------------|--------------|
+| CSV | Validation, Cleaning, Transformation | Cleaned CSV, Reports | 3.8+ | [requirements.txt](django-basic/django_data-quality/requirements.txt) |
+| PDF | Text extraction, Analysis | Summaries, Insights | 3.8+ | [reqs.txt](streamlit-basic-ai/Streamlit_openai_chatbots/root_app/reqs.txt) |
+| SQLite/PostgreSQL | Querying, Data manipulation | Processed data, Analytics | 3.8+ | [requirements.txt](django-basic-ai/django_ai_chatbot/requirements.txt) |
 
 ### AI Integration Features
 
-| Application | Python Version | Requirements | AI Capabilities | Integration Points | Use Cases |
-|------------|---------------|--------------|----------------|-------------------|-----------|
-| Chatbots | 3.8+ | [reqs.txt](streamlit-basic-ai/Streamlit_openai_chatbots/open_ai_chatbot_talk_with_website/reqs.txt) | Natural Language Processing | Websites, Databases | Customer support, Data querying |
-| Document Analysis | 3.8+ | [reqs.txt](streamlit-basic-ai/Streamlit_openai_chatbots/open_ai_chatbot_talk_with_n_pdfs/reqs.txt) | Text Analysis, Summarization | PDFs, Documents | Content analysis, Information extraction |
-| Meeting Assistant | 3.8+ | [reqs.txt](streamlit-basic-ai/meeting_assistant/reqs.txt) | Speech Processing | Audio files | Meeting transcription, Note taking |
-| Data Consultant | 3.8+ | [requirements.txt](streamlit-basic-ai/Gen_ai_data_consultant/requirments/requirements.txt) | Data Analysis, Visualization | Various data sources | Data insights, Business intelligence |
+| AI Capabilities | Integration Points | Customization | Python Version | Requirements |
+|----------------|-------------------|---------------|----------------|--------------|
+| OpenAI Chatbots | Web interfaces, APIs | Prompt engineering, Model selection | 3.8+ | [reqs.txt](streamlit-basic-ai/Streamlit_openai_chatbots/root_app/reqs.txt) |
+| Document Analysis | PDF processing, Text extraction | Analysis parameters, Output format | 3.8+ | [requirements.txt](django-basic-ai/django_ai_chatbot/requirements.txt) |
+| Meeting Assistant | Audio processing, Text analysis | Summary length, Key points | 3.8+ | [requirements.txt](streamlit-basic-ai/meeting_assistant/requirements.txt) |
 
 ### User Interface Components
 
-| Component | Framework | Python Version | Requirements | Features | Customization |
-|-----------|-----------|---------------|--------------|----------|---------------|
-| Dashboards | Streamlit | 3.8+ | [reqs.txt](streamlit-basic-ai/Streamlit_openai_chatbots/root_app/reqs.txt) | Interactive, Real-time | CSS, Layouts |
-| Admin Panels | Django | 3.8+ | [requirements.txt](django-basic/django_data-quality/requirements.txt) | CRUD operations, Management | Templates, Forms |
-| Maps | Streamlit/Leaflet | 3.8+ | [reqs.txt](streamlit-basic/maps_app/root_app/reqs.txt) | Interactive, Location-based | Markers, Layers |
-| Chat Interfaces | Both | 3.8+ | [reqs.txt](streamlit-basic-ai/Streamlit_openai_chatbots/root_app/reqs.txt) | Real-time, Responsive | Styling, Layouts |
+| Component Type | Features | Customization | Python Version | Requirements |
+|---------------|----------|---------------|----------------|--------------|
+| Streamlit Apps | Interactive widgets, Data visualization | Theme, Layout | 3.8+ | [requirements.txt](streamlit-basic/streamlit_CRUD/requirements.txt) |
+| Django Admin | CRUD operations, User management | Permissions, Views | 3.8+ | [requirements.txt](django-basic/django_data-quality/requirements.txt) |
+| Mapping Tools | Location tracking, Geo-visualization | Map styles, Markers | 3.8+ | [requirements.txt](streamlit-basic/streamlit_CRUD/requirements.txt) |
 
 ## Getting Started
 
-Each application directory contains its own:
-- Requirements file (`requirements.txt` or `reqs.txt`)
-- Documentation (README files)
-- Example data and configurations
+Each application directory contains its own setup instructions and requirements. Check the respective README files for detailed information.
 
 ## License
 
-This repository is licensed under the terms specified in the individual LICENSE files within each application directory.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Contributing
 
-Feel free to explore the different applications and contribute to their development. Each application is self-contained and can be run independently.
+Feel free to explore the applications and contribute to their development!
